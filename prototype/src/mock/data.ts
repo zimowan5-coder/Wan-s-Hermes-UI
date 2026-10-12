@@ -82,40 +82,40 @@ export interface Channel {
 }
 
 export const mockSessions: ChatSession[] = [
-  { id: 's1', title: '宿舍网络审计跟进', profile: '默认', updatedAt: '18:02', pinned: true, unread: 2 },
-  { id: 's2', title: '每日 AI 早报素材整理', profile: '默认', updatedAt: '09:45' },
-  { id: 's3', title: '点子挖掘 · 第 12 期', profile: 'Codex 协作', updatedAt: '昨天' },
-  { id: 's4', title: 'Butler 人格调优', profile: '小管', updatedAt: '昨天' },
-  { id: 's5', title: 'Owala 杯子比价', profile: '默认', updatedAt: '10-10' },
+  { id: 's1', title: '产品体验审查', profile: '默认', updatedAt: '18:02', pinned: true, unread: 2 },
+  { id: 's2', title: '每周产品简报', profile: '默认', updatedAt: '09:45' },
+  { id: 's3', title: '设计灵感收集', profile: '团队协作', updatedAt: '昨天' },
+  { id: 's4', title: '助手回复风格调整', profile: '演示助手', updatedAt: '昨天' },
+  { id: 's5', title: '办公设备选型', profile: '默认', updatedAt: '10-10' },
   { id: 's6', title: '新会话', profile: '默认', updatedAt: '刚刚' }
 ]
 
 export const mockMessages: Record<string, ChatMessage[]> = {
   s1: [
-    { id: 'm1', role: 'user', text: '审计报告第一阶段跑完了，帮我看看有没有问题', time: '17:58' },
+    { id: 'm1', role: 'user', text: '新版应用的可用性检查做完了，帮我总结结果', time: '17:58' },
     {
       id: 'm2', role: 'assistant',
-      text: '看了一遍，三个发现值得注意：\n\n1. 出口 IP 归属地与代理配置一致（Costa Mesa, CA），无 DNS 泄漏\n2. 有 2 条 IPv6 直连绕过了代理，建议在 ZeroOmega 里补一条 ::/0 规则\n3. 延迟抖动偏大（±180ms），可能是代理节点负载问题\n\n要我把第 2 条的修复步骤整理成检查清单吗？',
+      text: '整理了三个体验观察：\n\n1. 导航层级清晰，核心功能易于发现\n2. 有 2 个交互缺少加载状态\n3. 窄屏下侧栏仍可继续优化\n\n要我把第 2 条整理成改进清单吗？',
       time: '17:59'
     },
     {
-      id: 'm3', role: 'tool', toolName: 'network.probe', toolStatus: 'ok',
-      text: '已执行 12 个探测点，11 成功 / 1 超时（超时点：ipv6-test.com）', time: '17:59'
+      id: 'm3', role: 'tool', toolName: 'ui.audit', toolStatus: 'ok',
+      text: '已检查 12 个界面状态，11 个正常 / 1 个待优化', time: '17:59'
     },
-    { id: 'm4', role: 'user', text: '好，整理一下，顺便把报告存档', time: '18:02' }
+    { id: 'm4', role: 'user', text: '好，整理一下，顺便保存测试报告', time: '18:02' }
   ],
   s2: [
-    { id: 'm1', role: 'user', text: '今天早报的 GitHub 项目部分再补两个', time: '09:40' },
-    { id: 'm2', role: 'assistant', text: '收到，正在从 trending 拉取 AI 方向的新仓库……', time: '09:40' }
+    { id: 'm1', role: 'user', text: '给本周的产品简报再补两个设计案例', time: '09:40' },
+    { id: 'm2', role: 'assistant', text: '收到，正在整理公开的 UI 模式与参考资料……', time: '09:40' }
   ],
   s3: [
-    { id: 'm1', role: 'assistant', text: '第 12 期点子挖掘完成，共 4 个候选，已去重。需要现在投递吗？', time: '昨天' }
+    { id: 'm1', role: 'assistant', text: '设计灵感已整理，共 4 个方向。要生成评审清单吗？', time: '昨天' }
   ],
   s4: [
-    { id: 'm1', role: 'user', text: '小管的人格里加一条：提醒事项按北京时间说', time: '昨天' }
+    { id: 'm1', role: 'user', text: '演示助手的人格里加一条：提醒事项按北京时间说', time: '昨天' }
   ],
   s5: [
-    { id: 'm1', role: 'assistant', text: 'Owala FreeSip 24oz：Target $29.99，亚马逊第三方 $34.95。等你有美国收货渠道再下手。', time: '10-10' }
+    { id: 'm1', role: 'assistant', text: '演示显示器 A 和 B 的尺寸与价格已录入比较表。', time: '10-10' }
   ]
 }
 
@@ -123,59 +123,59 @@ export const mockApprovals: Approval[] = [
   {
     id: 'a1',
     sessionId: 's1',
-    title: '写入文件：docs/审计报告-阶段1.md',
-    detail: 'agent 请求将第一阶段审计报告写入 butler/docs/，约 4 KB 纯文本，无敏感信息。',
+    title: '写入文件：docs/demo-usability-report.md',
+    detail: '演示任务请求将可用性报告写入 docs/，约 4 KB 纯文本。',
     risk: 'low',
     status: 'pending'
   },
   {
     id: 'a2',
     sessionId: 's1',
-    title: '执行：ZeroOmega 代理规则热更新',
-    detail: 'agent 请求修改本地代理客户端规则（新增 ::/0 走代理）。影响本机网络出口，请确认。',
+    title: '执行：演示环境设置修改',
+    detail: '演示任务请求修改应用环境设置。模拟高风险操作，请明确确认。',
     risk: 'high',
     status: 'pending'
   }
 ]
 
 export const mockCronJobs: CronJob[] = [
-  { id: 'c1', name: '每日 AI 早报', schedule: '每天 09:45', nextRun: '明天 09:45', enabled: true, lastStatus: 'ok' },
-  { id: 'c2', name: '点子挖掘投递', schedule: '每天 21:45', nextRun: '今天 21:45', enabled: true, lastStatus: 'ok' },
-  { id: 'c3', name: 'Claude 用量重置提醒', schedule: '2026-10-21 09:45', nextRun: '10-21 09:45', enabled: true, lastStatus: 'never' },
-  { id: 'c4', name: 'IPRoyal 到期提醒', schedule: '2026-11-04 09:00', nextRun: '11-04 09:00', enabled: false, lastStatus: 'never' }
+  { id: 'c1', name: '每周产品简报', schedule: '每天 09:45', nextRun: '明天 09:45', enabled: true, lastStatus: 'ok' },
+  { id: 'c2', name: '设计灵感汇总', schedule: '每天 21:45', nextRun: '今天 21:45', enabled: true, lastStatus: 'ok' },
+  { id: 'c3', name: '设计评审提醒', schedule: '2026-10-21 09:45', nextRun: '10-21 09:45', enabled: true, lastStatus: 'never' },
+  { id: 'c4', name: '演示订阅到期提醒', schedule: '2026-11-04 09:00', nextRun: '11-04 09:00', enabled: false, lastStatus: 'never' }
 ]
 
 export const mockTasks: TaskItem[] = [
   { id: 't1', title: 'Hermes UI 原型 · 聊天工作台', column: 'doing', tag: 'Wan-s-Hermes-UI' },
-  { id: 't2', title: '跑完 Claude Code 网络审计阶段 2', column: 'todo', tag: '网络' },
-  { id: 't3', title: 'AI 早报第 5 期投递', column: 'done', tag: '日报' },
-  { id: 't4', title: '点子挖掘去重清单同步', column: 'todo', tag: '点子' },
-  { id: 't5', title: 'Butler apply.ps1 回归体检', column: 'todo', tag: 'butler' }
+  { id: 't2', title: '完善设计系统对比度检查', column: 'todo', tag: '网络' },
+  { id: 't3', title: '产品简报第 5 期归档', column: 'done', tag: '日报' },
+  { id: 't4', title: '设计参考资料整理', column: 'todo', tag: '点子' },
+  { id: 't5', title: 'Demo Assistant apply.ps1 回归体检', column: 'todo', tag: 'butler' }
 ]
 
 export const mockSkills: Skill[] = [
-  { id: 'k1', name: 'butler-commission', desc: '派活验收：把任务书派给 Codex/Claude Code，结果写进台账', enabled: true, scope: '小管', commands: ['/派活', '/验收'] },
-  { id: 'k2', name: 'butler-schoolwork', desc: '老师布置的任务：解析作业要求、拆解步骤', enabled: true, scope: '小管', commands: ['/作业'] },
-  { id: 'k3', name: 'butler-shopping', desc: '购物比价：按美国居民口径给价格与购买渠道', enabled: false, scope: '小管', commands: ['/比价'] },
-  { id: 'k4', name: 'github-dev', desc: '仓库读写助手：读代码、开 PR（写操作需确认）', enabled: true, scope: '默认', commands: ['/repo'] }
+  { id: 'k1', name: 'demo-workflow', desc: '模拟任务委派与验收的演示技能', enabled: true, scope: '演示助手', commands: ['/派活', '/验收'] },
+  { id: 'k2', name: 'demo-planner', desc: '模拟规划任务：解析需求并拆分步骤', enabled: true, scope: '演示助手', commands: ['/作业'] },
+  { id: 'k3', name: 'demo-research', desc: '模拟研究任务：比较公开资料与方案', enabled: false, scope: '演示助手', commands: ['/比价'] },
+  { id: 'k4', name: 'demo-repository', desc: '模拟仓库助手：仅展示操作流程', enabled: true, scope: '默认', commands: ['/repo'] }
 ]
 
 export const mockMemory: MemoryEntry[] = [
-  { id: 'e1', kind: 'preference', text: '交流用中文；推荐按美国居民口径（USD、美国电商）；提醒按北京时间', updatedAt: '10-11' },
-  { id: 'e2', kind: 'fact', text: '宿舍舍友抽烟，已决定用桌面空气净化器解决，不伤和气', updatedAt: '10-09' },
+  { id: 'e1', kind: 'preference', text: '演示偏好：简洁回复；使用系统主题；日期按本地格式显示', updatedAt: '10-11' },
+  { id: 'e2', kind: 'fact', text: '演示备注：用户偏好紧凑的会话侧栏', updatedAt: '10-09' },
   { id: 'e3', kind: 'project', text: 'Wan-s-Hermes-UI：为 Hermes Desktop 做新交互，原型阶段用模拟数据', updatedAt: '今天' },
-  { id: 'e4', kind: 'fact', text: 'IPRoyal 美国 ISP 代理 $5.40/月，2026-11-07 到期，自动续费已关', updatedAt: '10-08' }
+  { id: 'e4', kind: 'fact', text: '演示订阅：样例服务将于下月到期', updatedAt: '10-08' }
 ]
 
 export const mockMemoryNodes: MemoryNode[] = [
   { id: 'n1', label: '我', x: 300, y: 200, size: 26 },
   { id: 'n2', label: 'Hermes UI', x: 150, y: 110, size: 16 },
-  { id: 'n3', label: '网络审计', x: 450, y: 110, size: 16 },
-  { id: 'n4', label: 'AI 早报', x: 120, y: 300, size: 14 },
-  { id: 'n5', label: '点子挖掘', x: 300, y: 330, size: 14 },
-  { id: 'n6', label: 'Butler 小管', x: 480, y: 300, size: 14 },
+  { id: 'n3', label: '可用性审查', x: 450, y: 110, size: 16 },
+  { id: 'n4', label: '产品简报', x: 120, y: 300, size: 14 },
+  { id: 'n5', label: '设计灵感', x: 300, y: 330, size: 14 },
+  { id: 'n6', label: 'Demo Assistant 演示助手', x: 480, y: 300, size: 14 },
   { id: 'n7', label: 'Codex', x: 220, y: 200, size: 10 },
-  { id: 'n8', label: '宿舍', x: 390, y: 230, size: 10 }
+  { id: 'n8', label: '演示项目', x: 390, y: 230, size: 10 }
 ]
 
 export const mockMemoryEdges: [string, string][] = [
@@ -193,19 +193,19 @@ export interface ToolRun {
 }
 
 export const mockToolRuns: ToolRun[] = [
-  { id: 'r1', sessionId: 's1', name: 'network.probe', status: 'ok', duration: '1.2s', detail: '12 个探测点，11 成功 / 1 超时' },
-  { id: 'r2', sessionId: 's1', name: 'file.write docs/审计报告-阶段1.md', status: 'ok', duration: '0.3s', detail: '4 KB，已获审批 a1' },
-  { id: 'r3', sessionId: 's1', name: 'browser.fetch ipv6-test.com', status: 'error', duration: '8.0s', detail: '连接超时（模拟的失败样例，可重试）' }
+  { id: 'r1', sessionId: 's1', name: 'ui.audit', status: 'ok', duration: '1.2s', detail: '12 个界面状态，11 个完成 / 1 个待优化' },
+  { id: 'r2', sessionId: 's1', name: 'file.write docs/demo-usability-report.md', status: 'ok', duration: '0.3s', detail: '4 KB，审批事件仅供演示' },
+  { id: 'r3', sessionId: 's1', name: 'browser.fetch example.org', status: 'error', duration: '8.0s', detail: '连接超时（模拟的失败样例，可重试）' }
 ]
 
 export const mockChannels: Channel[] = [
-  { id: 'ch1', name: 'Telegram', kind: '个人网关', status: 'connected', detail: '@bot 已连接 · 3 个会话' },
-  { id: 'ch2', name: '微信', kind: '个人网关', status: 'disconnected', detail: '扫码登录后启用（scripts/weixin-login.ps1）' },
-  { id: 'ch3', name: 'Webhooks', kind: '事件推送', status: 'connected', detail: '2 条规则生效中' }
+  { id: 'ch1', name: '示例聊天通道', kind: '个人网关', status: 'connected', detail: '演示连接 · 3 个会话' },
+  { id: 'ch2', name: '示例消息通道', kind: '个人网关', status: 'disconnected', detail: '模拟扫码连接后启用' },
+  { id: 'ch3', name: 'Webhooks', kind: '事件推送', status: 'connected', detail: '2 条模拟规则' }
 ]
 
 export const mockProfiles = [
   { id: 'p1', name: '默认', desc: '日常主力 profile', active: true },
-  { id: 'p2', name: '小管', desc: '私人智能管家（butler 定制层）', active: false },
-  { id: 'p3', name: 'Codex 协作', desc: '点子构建专用', active: false }
+  { id: 'p2', name: '演示助手', desc: '演示用独立助手配置', active: false },
+  { id: 'p3', name: '团队协作', desc: '示例协作配置', active: false }
 ]
