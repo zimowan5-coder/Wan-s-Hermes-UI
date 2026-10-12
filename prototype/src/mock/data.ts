@@ -26,6 +26,7 @@ export interface ChatMessage {
 
 export interface Approval {
   id: string
+  sessionId: string // 审批归属会话，避免全局状态污染其他会话
   title: string
   detail: string
   risk: 'low' | 'medium' | 'high'
@@ -121,6 +122,7 @@ export const mockMessages: Record<string, ChatMessage[]> = {
 export const mockApprovals: Approval[] = [
   {
     id: 'a1',
+    sessionId: 's1',
     title: '写入文件：docs/审计报告-阶段1.md',
     detail: 'agent 请求将第一阶段审计报告写入 butler/docs/，约 4 KB 纯文本，无敏感信息。',
     risk: 'low',
@@ -128,6 +130,7 @@ export const mockApprovals: Approval[] = [
   },
   {
     id: 'a2',
+    sessionId: 's1',
     title: '执行：ZeroOmega 代理规则热更新',
     detail: 'agent 请求修改本地代理客户端规则（新增 ::/0 走代理）。影响本机网络出口，请确认。',
     risk: 'high',
@@ -182,6 +185,7 @@ export const mockMemoryEdges: [string, string][] = [
 
 export interface ToolRun {
   id: string
+  sessionId: string // 工具执行归属会话
   name: string
   status: 'ok' | 'running' | 'error'
   duration: string
@@ -189,9 +193,9 @@ export interface ToolRun {
 }
 
 export const mockToolRuns: ToolRun[] = [
-  { id: 'r1', name: 'network.probe', status: 'ok', duration: '1.2s', detail: '12 个探测点，11 成功 / 1 超时' },
-  { id: 'r2', name: 'file.write docs/审计报告-阶段1.md', status: 'ok', duration: '0.3s', detail: '4 KB，已获审批 a1' },
-  { id: 'r3', name: 'browser.fetch ipv6-test.com', status: 'error', duration: '8.0s', detail: '连接超时（模拟的失败样例，可重试）' }
+  { id: 'r1', sessionId: 's1', name: 'network.probe', status: 'ok', duration: '1.2s', detail: '12 个探测点，11 成功 / 1 超时' },
+  { id: 'r2', sessionId: 's1', name: 'file.write docs/审计报告-阶段1.md', status: 'ok', duration: '0.3s', detail: '4 KB，已获审批 a1' },
+  { id: 'r3', sessionId: 's1', name: 'browser.fetch ipv6-test.com', status: 'error', duration: '8.0s', detail: '连接超时（模拟的失败样例，可重试）' }
 ]
 
 export const mockChannels: Channel[] = [

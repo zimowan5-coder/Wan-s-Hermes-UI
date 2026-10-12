@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Shell, type ViewId } from './components/Shell'
+import { decideApprovals } from './lib/session-state'
 import { mockApprovals, type Approval } from './mock/data'
 import { useTheme } from './theme/theme'
 import { ChatView } from './views/ChatView'
@@ -18,7 +19,7 @@ export default function App() {
   const pendingCount = useMemo(() => approvals.filter(a => a.status === 'pending').length, [approvals])
 
   const decideApproval = (id: string, ok: boolean) =>
-    setApprovals(prev => prev.map(a => (a.id === id ? { ...a, status: ok ? 'approved' : 'denied' } : a)))
+    setApprovals(prev => decideApprovals(prev, id, ok))
 
   return (
     <Shell

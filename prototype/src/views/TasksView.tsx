@@ -15,6 +15,15 @@ export function TasksView() {
 
   const toggle = (id: string) => setJobs(prev => prev.map(j => (j.id === id ? { ...j, enabled: !j.enabled } : j)))
 
+  // 新建：明确的模拟反馈 —— 追加一条 MOCK 任务，而非无响应
+  const addMockJob = () => {
+    const n = jobs.filter(j => j.id.startsWith('mock-')).length + 1
+    setJobs(prev => [...prev, {
+      id: `mock-${Date.now()}`, name: `新建任务 ${n}（模拟）`,
+      schedule: '手动触发', nextRun: '—', enabled: false, lastStatus: 'never'
+    }])
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-5">
       <div className="flex items-center gap-2 mb-4">
@@ -27,7 +36,7 @@ export function TasksView() {
       <div className="flex items-center gap-2 mb-2">
         <CalendarClock size={15} style={{ color: 'var(--ui-accent)' }} />
         <h3 className="text-[13.5px] font-semibold">定时任务</h3>
-        <button className="btn ml-auto" style={{ padding: '4px 10px', fontSize: 12 }}><Plus size={13} />新建</button>
+        <button className="btn ml-auto" style={{ padding: '4px 10px', fontSize: 12 }} onClick={addMockJob}><Plus size={13} aria-hidden />新建</button>
       </div>
       <div className="flex flex-col gap-2 mb-7">
         {jobs.map(j => (
