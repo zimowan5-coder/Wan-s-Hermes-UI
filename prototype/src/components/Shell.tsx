@@ -1,6 +1,6 @@
 import {
   Bell, Brain, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare,
-  Monitor, Moon, Plug2, Settings as SettingsIcon, SquareKanban, Sun, Wifi, WifiOff
+  Monitor, Moon, Plug2, Search, Settings as SettingsIcon, SquareKanban, Sun, Wifi, WifiOff
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../theme/theme'
@@ -35,7 +35,8 @@ function useNow() {
 export function Shell({
   view, setView, children,
   themeMode, onThemeChange,
-  pendingApprovals, connectionOk, onToggleConnection
+  pendingApprovals, connectionOk, onToggleConnection,
+  onOpenPalette
 }: {
   view: ViewId
   setView: (v: ViewId) => void
@@ -45,6 +46,7 @@ export function Shell({
   pendingApprovals: number
   connectionOk: boolean
   onToggleConnection: () => void
+  onOpenPalette: () => void
 }) {
   const [collapsed, setCollapsed] = useState(() => {
     try { return window.localStorage.getItem('hermes-ui-nav-collapsed') === '1' } catch { return false }
@@ -103,6 +105,14 @@ export function Shell({
         </div>
 
         <div className="flex-1" />
+
+        {/* 命令面板触发 */}
+        <button className="btn" style={{ padding: '5px 10px', fontSize: 12, color: 'var(--fg-tertiary)' }}
+          onClick={onOpenPalette} title="命令面板（Ctrl/⌘+K）" aria-label="打开命令面板">
+          <Search size={13} aria-hidden />
+          <span className="hidden md:inline">命令</span>
+          <kbd className="chip font-mono text-[10px]">⌘K</kbd>
+        </button>
 
         {/* 连接状态（MOCK 可切换，用于演示断连态） */}
         <button
