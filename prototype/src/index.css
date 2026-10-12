@@ -227,6 +227,22 @@ body {
 .pulse-dot { animation: pulseDot 1.4s ease-in-out infinite; }
 @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
+/* 骨架屏：内容加载中的占位微光 */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--bg-raised), transparent);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
 /* 减少动态：遵循 prefers-reduced-motion（WCAG 2.3.3） */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

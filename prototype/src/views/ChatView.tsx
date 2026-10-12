@@ -1,5 +1,5 @@
 import {
-  CheckCircle2, ChevronDown, ChevronRight, History, Loader2,
+  CheckCircle2, Check, ChevronDown, ChevronRight, Copy, History, Loader2,
   MessageSquarePlus, PanelLeftClose, PanelLeftOpen, RotateCcw,
   SendHorizonal, ShieldAlert, ShieldCheck, TerminalSquare, WifiOff, Wrench, XCircle
 } from 'lucide-react'
@@ -106,6 +106,21 @@ function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok:
 
 /* ---------- 消息行 ---------- */
 function MessageRow({ m }: { m: ChatMessage }) {
+  const [copied, setCopied] = useState(false)
+  const copyTimer = useRef<number | null>(null)
+  useEffect(() => () => { if (copyTimer.current) window.clearTimeout(copyTimer.current) }, [])
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(m.text)
+    } catch {
+      /* 剪贴板不可用时静默忽略（file:// 等） */
+    }
+    setCopied(true)
+    if (copyTimer.current) window.clearTimeout(copyTimer.current)
+    copyTimer.current = window.setTimeout(() => setCopied(false), 1600)
+  }
+
   if (m.role === 'tool') {
     const ok = m.toolStatus === 'ok'
     const running = m.toolStatus === 'running'
@@ -134,15 +149,29 @@ function MessageRow({ m }: { m: ChatMessage }) {
   }
   const mine = m.role === 'user'
   return (
-    <div className={`msg-stream flex ${mine ? 'justify-end' : 'justify-start'} py-1.5`}>
+    <div className={`msg-stream flex ${mine ? 'justify-end' : 'justify-start'} py-1.5 group`}>
       <div
-        className="max-w-[85%] px-3.5 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap"
+        className="max-w-[85%] px-3.5 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap relative"
         style={mine
           ? { background: 'var(--accent)', color: 'var(--accent-fg)', borderRadius: 'var(--radius-lg) var(--radius-lg) 4px var(--radius-lg)' }
           : { background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px' }}
       >
         {m.text}
-        <div className="text-[10px] mt-1 opacity-60">{m.time}</div>
+        <div className="text-[10px] mt-1 opacity-60 flex items-center gap-2">
+          <span>{m.time}</span>
+          {!mine && (
+            <button
+              className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center gap-1 rounded px-1 py-0.5"
+              style={{ color: 'var(--fg-tertiary)' }}
+              onClick={copy}
+              aria-label={copied ? '已复制' : '复制消息'}
+              title="复制消息"
+            >
+              {copied ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
+              {copied && <span className="text-[10px]">已复制</span>}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
