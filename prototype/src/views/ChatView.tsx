@@ -315,7 +315,7 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
 
   const sessions = useSessionList()
   const {
-    messages, runs, sending, loading, approvals,
+    messages, runs, sending, loading, error, approvals,
     sessionPending, sessionDecided,
     agentState, send, decide, retry
   } = useChatSession(activeId)
@@ -458,6 +458,15 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
             {loading ? (
               <div className="flex items-center gap-2 py-10 justify-center text-[12.5px]" style={{ color: 'var(--fg-tertiary)' }} role="status">
                 <Loader2 size={15} className="animate-spin" aria-hidden />加载会话中…
+              </div>
+            ) : error ? (
+              <div className="surface-overlay p-6 text-center view-enter" role="alert">
+                <WifiOff size={20} style={{ color: 'var(--warning)' }} className="mx-auto mb-2" aria-hidden />
+                <p className="text-[13px] font-medium" style={{ color: 'var(--fg-primary)' }}>数据加载失败</p>
+                <p className="text-[12px] mt-1 max-w-[420px] mx-auto" style={{ color: 'var(--fg-secondary)' }}>{error}</p>
+                <p className="text-[11.5px] mt-2" style={{ color: 'var(--fg-tertiary)' }}>
+                  live 模式部分接口尚未实现属预期行为，见 docs/INTEGRATION-PLAN.md §8
+                </p>
               </div>
             ) : messages.length === 0 && !sending ? (
               <EmptyState onSuggest={t => { setInput(t); inputRef.current?.focus() }} />

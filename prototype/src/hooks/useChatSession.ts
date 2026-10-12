@@ -48,29 +48,39 @@ export function useChatSession(sessionId: string, ds: HermesDataSource = getData
   const [runs, setRuns] = useState<ToolRun[]>([])
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const timers = useRef<number[]>([])
 
   useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
 
-  // 会话切换：重新加载该会话的三类状态；订阅审批变更
+  // 会话切换：重新加载该会话的三类状态；订阅审批变更。
+  // 逐个 settle：live 模式下部分方法尚未实现，失败的那路只记 error，不卡死其他路。
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setSending(false)
-    Promise.all([ds.getMessages(sessionId), ds.listApprovals(), ds.listToolRuns(sessionId)]).then(
+    setError(null)
+    const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
+    Promise.allSettled([ds.getMessages(sessionId), ds.listApprovals(), ds.listToolRuns(sessionId)]).then(
       ([m, a, r]) => {
-        if (!cancelled) {
-          setMessages(m)
-          setApprovals(a)
-          setRuns(r)
-          setLoading(false)
-        }
+        if (cancelled) return
+        if (m.status === 'fulfilled') setMessages(m.value)
+        if (a.status === 'fulfilled') setApprovals(a.value)
+        if (r.status === 'fulfilled') setRuns(r.value)
+        const firstErr = [m, a, r].find(x => x.status === 'rejected')
+        if (firstErr) setError(errMsg((firstErr as PromiseRejectedResult).reason))
+        setLoading(false)
       }
     )
-    const off = ds.onApprovalsChanged(() => {
-      ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) })
-    })
-    return () => { cancelled = true; off() }
+    let off: (() => void) | undefined
+    try {
+      off = ds.onApprovalsChanged(() => {
+        ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) }).catch(() => {})
+      })
+    } catch (e) {
+      if (!cancelled) setError(errMsg(e))
+    }
+    return () => { cancelled = true; off?.() }
   }, [ds, sessionId])
 
   const refreshRuns = useCallback(async () => {
@@ -117,7 +127,7 @@ export function useChatSession(sessionId: string, ds: HermesDataSource = getData
     : 'idle'
 
   return {
-    messages, runs, sending, loading,
+    messages, runs, sending, loading, error,
     approvals, // 全部审批（用于会话列表徽标等全局派生）
     sessionPending, sessionDecided,
     agentState, send, decide, retry
