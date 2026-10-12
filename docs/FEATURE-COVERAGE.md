@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|---|---|
 | 1 | 聊天（composer/transcript/slash） | `src/app/chat/`（composer/、hooks/use-slash-completions.ts） | 聊天工作台 | ✅ | ✅ 完整 | 后端会话/消息；渲染器只做展示缓存 | `prompt.submit`/`session.*`（见 `src/api/sessions.ts`，已验证存在） | 低：传输层 `apps/shared` 可复用 |
 | 2 | 会话管理（列表/置顶/导入） | `src/app/chat/sidebar/`、`src/app/command-center/` sessions、`src/app/session-import` | 聊天（会话列表） | ✅ | ✅ 列表/置顶；导入 ❌ | 后端 `session.list`；置顶为后端字段 | `session.list` 已验证；import 格式待验证 | 低 |
-| 3 | Slash 命令（含技能派生） | 后端 `commands.catalog`；`src/lib/desktop-slash-commands.ts` | 聊天 composer 联想 | ✅ | ❌（原型 composer 无联想） | 后端权威；桌面只做策展 | `commands.catalog` 已验证 | 低：照抄策展规则即可 |
+| 3 | Slash 命令（含技能派生） | 后端 `commands.catalog`；`src/lib/desktop-slash-commands.ts` | 聊天 composer 联想 | ✅ | ✅（composer 输入 `/` 弹出联想，命令名取自官方策展） | 后端权威；桌面只做策展 | `commands.catalog` 已验证 | 低：照抄策展规则即可 |
 | 4 | 工具执行（tool rows） | `src/components/assistant-ui/` transcript 内 | 聊天（工具时间线） | ✅ | ✅（模拟） | 后端工具事件流；渲染器合并渲染 | 事件经 WS，未逐个验证方法名 → 待验证 | 中：流式合并逻辑需对照实现 |
 | 5 | Terminal pane | `src/app/right-sidebar/terminal/`（xterm + node-pty） | 聊天右栏 pane（规划） | ✅ | ❌ | Electron 主进程（node-pty）；渲染器经能力桥 | 能力桥方法待验证 | **高**：node-pty 必须走 Electron，不能在纯 Web 原型里实现 |
 | 6 | 审批 CardStack | `src/components/ui/card-stack.tsx` + DESIGN.md | 聊天（审批卡） | ✅ | ✅（交互语义已对齐） | 后端审批事件；渲染器单宿主栈 | 事件名待验证 | 中：语义必须逐条保留（手势不批准/离场失活/不抢焦点） |

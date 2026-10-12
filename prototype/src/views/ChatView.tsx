@@ -243,6 +243,63 @@ function EmptyState({ onSuggest }: { onSuggest: (t: string) => void }) {
   )
 }
 
+/* ---------- Slash 命令联想 ----------
+ * 命令名取自官方 desktop-slash-commands.ts（真实存在，非编造）；
+ * 选择后仅插入文本（模拟），真实集成后走 command.dispatch。 */
+const SLASH_COMMANDS: { name: string; desc: string }[] = [
+  { name: 'new', desc: '开始新会话（别名 /reset /clear）' },
+  { name: 'help', desc: '显示 slash 命令帮助' },
+  { name: 'profile', desc: '切换 Hermes profile' },
+  { name: 'model', desc: '切换本会话模型' },
+  { name: 'skills', desc: '技能管理' },
+  { name: 'yolo', desc: '危险命令自动批准开关' },
+  { name: 'stop', desc: '停止当前任务' },
+  { name: 'branch', desc: '从当前点分支会话' },
+  { name: 'title', desc: '重命名当前会话' },
+  { name: 'compress', desc: '压缩会话上下文' },
+  { name: 'status', desc: '查看会话状态' },
+  { name: 'save', desc: '保存会话' }
+]
+
+function SlashMenu({
+  matches, active, onSelect, onHover
+}: {
+  matches: typeof SLASH_COMMANDS
+  active: number
+  onSelect: (i: number) => void
+  onHover: (i: number) => void
+}) {
+  return (
+    <div role="listbox" aria-label="slash 命令联想"
+      className="absolute bottom-full mb-2 left-0 right-0 rounded-xl overflow-hidden view-enter"
+      style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-lg)' }}>
+      <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+        <span className="text-[10.5px] font-semibold uppercase tracking-wide" style={{ color: 'var(--fg-tertiary)' }}>slash 命令</span>
+        <MockBadge label="MOCK" />
+      </div>
+      <div className="max-h-[240px] overflow-y-auto p-1.5">
+        {matches.map((c, i) => (
+          <button key={c.name} role="option" aria-selected={i === active}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors"
+            style={i === active ? { background: 'var(--accent-soft)' } : {}}
+            onMouseEnter={() => onHover(i)}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => onSelect(i)}
+          >
+            <code className="text-[12.5px] font-mono font-semibold" style={{ color: 'var(--accent)' }}>/{c.name}</code>
+            <span className="text-[12px] truncate" style={{ color: 'var(--fg-secondary)' }}>{c.desc}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-3 px-3.5 py-2 hairline-t text-[10.5px]" style={{ color: 'var(--fg-tertiary)' }}>
+        <span><kbd className="chip font-mono">↑↓</kbd> 选择</span>
+        <span><kbd className="chip font-mono">↵</kbd> 插入</span>
+        <span><kbd className="chip font-mono">esc</kbd> 关闭</span>
+      </div>
+    </div>
+  )
+}
+
 /* ---------- 主视图 ----------
  * 数据流：useSessionList / useChatSession → HermesDataSource（当前为 Mock 实现）。
  * 本组件只负责布局与 UI 状态（输入框、折叠），不直接读写 mock 数据。 */
@@ -250,6 +307,9 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
   const [activeId, setActiveId] = useState('s1')
   const [input, setInput] = useState('')
   const [listOpen, setListOpen] = useState(true)
+  const [cursor, setCursor] = useState(0)
+  const [slashActive, setSlashActive] = useState(0)
+  const [slashOff, setSlashOff] = useState(false) // Esc 手动关闭后，本次输入不再弹出
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -274,6 +334,44 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
     if (id === activeId) return
     setActiveId(id)
     setInput('')
+  }
+
+  /* slash 联想：取光标前的 /xxx token（行首或空白后） */
+  const slashToken = (() => {
+    const before = input.slice(0, cursor)
+    const m = /(^|\s)\/([a-z-]*)$/.exec(before)
+    return m ? { query: m[2], start: cursor - m[2].length - 1 } : null
+  })()
+  const slashMatches = slashToken
+    ? SLASH_COMMANDS.filter(c => c.name.includes(slashToken.query)).slice(0, 8)
+    : []
+  const slashOpen = slashToken !== null && slashMatches.length > 0 && connectionOk && !slashOff
+
+  const syncCursor = () => setCursor(inputRef.current?.selectionStart ?? input.length)
+
+  const insertSlash = (i: number) => {
+    if (!slashToken || !slashMatches[i]) return
+    const cmd = slashMatches[i].name
+    const next = input.slice(0, slashToken.start) + '/' + cmd + ' ' + input.slice(cursor)
+    const pos = slashToken.start + cmd.length + 2
+    setInput(next)
+    setSlashActive(0)
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.setSelectionRange(pos, pos)
+      setCursor(pos)
+    })
+  }
+
+  const onComposerKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (slashOpen) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSlashActive(a => Math.min(slashMatches.length - 1, a + 1)); return }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setSlashActive(a => Math.max(0, a - 1)); return }
+      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertSlash(slashActive); return }
+      if (e.key === 'Escape') { e.preventDefault(); setSlashOff(true); return }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+    if (e.key === 'Escape') { inputRef.current?.blur() }
   }
 
   return (
@@ -388,22 +486,25 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
 
         <div className="p-4">
           <div className="reading-col">
-            <div className="surface-overlay p-2 flex items-end gap-2">
-              <label htmlFor="composer" className="sr-only">输入消息，Enter 发送，Shift+Enter 换行</label>
+            <div className="surface-overlay p-2 flex items-end gap-2 relative">
+              <label htmlFor="composer" className="sr-only">输入消息，Enter 发送，Shift+Enter 换行，/ 唤起命令联想</label>
+              {slashOpen && (
+                <SlashMenu matches={slashMatches} active={slashActive} onSelect={insertSlash} onHover={setSlashActive} />
+              )}
               <textarea
                 id="composer"
                 ref={inputRef}
                 className="input flex-1"
                 style={{ border: 'none', background: 'transparent', resize: 'none', boxShadow: 'none' }}
                 rows={2}
-                placeholder={connectionOk ? '输入消息… Enter 发送，Shift+Enter 换行（原型：返回模拟回复）' : '已断连（模拟），无法发送'}
+                placeholder={connectionOk ? '输入消息… / 唤起命令，Enter 发送（原型：返回模拟回复）' : '已断连（模拟），无法发送'}
                 value={input}
                 disabled={!connectionOk}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
-                  if (e.key === 'Escape') { inputRef.current?.blur() }
-                }}
+                onChange={e => { setInput(e.target.value); setSlashOff(false); setSlashActive(0) }}
+                onSelect={syncCursor}
+                onKeyUp={syncCursor}
+                onClick={syncCursor}
+                onKeyDown={onComposerKeyDown}
               />
               <button className="btn btn-primary" onClick={() => handleSend()} disabled={!input.trim() || sending || !connectionOk} aria-label="发送消息">
                 <SendHorizonal size={14} aria-hidden />发送
