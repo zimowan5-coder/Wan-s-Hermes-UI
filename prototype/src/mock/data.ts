@@ -85,7 +85,8 @@ export const mockSessions: ChatSession[] = [
   { id: 's2', title: '每日 AI 早报素材整理', profile: '默认', updatedAt: '09:45' },
   { id: 's3', title: '点子挖掘 · 第 12 期', profile: 'Codex 协作', updatedAt: '昨天' },
   { id: 's4', title: 'Butler 人格调优', profile: '小管', updatedAt: '昨天' },
-  { id: 's5', title: 'Owala 杯子比价', profile: '默认', updatedAt: '10-10' }
+  { id: 's5', title: 'Owala 杯子比价', profile: '默认', updatedAt: '10-10' },
+  { id: 's6', title: '新会话', profile: '默认', updatedAt: '刚刚' }
 ]
 
 export const mockMessages: Record<string, ChatMessage[]> = {
@@ -177,6 +178,20 @@ export const mockMemoryNodes: MemoryNode[] = [
 export const mockMemoryEdges: [string, string][] = [
   ['n1', 'n2'], ['n1', 'n3'], ['n1', 'n4'], ['n1', 'n5'], ['n1', 'n6'],
   ['n2', 'n7'], ['n3', 'n7'], ['n5', 'n7'], ['n1', 'n8']
+]
+
+export interface ToolRun {
+  id: string
+  name: string
+  status: 'ok' | 'running' | 'error'
+  duration: string
+  detail: string
+}
+
+export const mockToolRuns: ToolRun[] = [
+  { id: 'r1', name: 'network.probe', status: 'ok', duration: '1.2s', detail: '12 个探测点，11 成功 / 1 超时' },
+  { id: 'r2', name: 'file.write docs/审计报告-阶段1.md', status: 'ok', duration: '0.3s', detail: '4 KB，已获审批 a1' },
+  { id: 'r3', name: 'browser.fetch ipv6-test.com', status: 'error', duration: '8.0s', detail: '连接超时（模拟的失败样例，可重试）' }
 ]
 
 export const mockChannels: Channel[] = [
