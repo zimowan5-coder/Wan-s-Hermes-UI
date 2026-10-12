@@ -3,18 +3,14 @@ import {
   MessageSquarePlus, PanelLeftClose, PanelLeftOpen, RotateCcw,
   SendHorizonal, ShieldAlert, ShieldCheck, TerminalSquare, WifiOff, Wrench, XCircle
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MockBadge } from '../components/MockBadge'
+import type { AgentState } from '../data/types'
+import { useChatSession, useSessionList } from '../hooks/useChatSession'
+import { pendingApprovalsForSession } from '../lib/session-state'
 import {
-  decidedApprovalsForSession, pendingApprovalsForSession, setToolRunStatus, toolRunsForSession
-} from '../lib/session-state'
-import {
-  mockMessages, mockSessions, mockToolRuns,
   type Approval, type ChatMessage, type ToolRun
 } from '../mock/data'
-
-/* ---------- Agent 状态机（会话级） ---------- */
-type AgentState = 'idle' | 'thinking' | 'tool-running' | 'awaiting-approval' | 'error'
 
 const STATE_META: Record<AgentState, { label: string; color: string; spin?: boolean }> = {
   idle: { label: '就绪', color: 'var(--success)' },
@@ -218,85 +214,31 @@ function EmptyState({ onSuggest }: { onSuggest: (t: string) => void }) {
   )
 }
 
-/* ---------- 主视图 ---------- */
-export function ChatView({
-  approvals, onDecideApproval, connectionOk
-}: {
-  approvals: Approval[]
-  onDecideApproval: (id: string, ok: boolean) => void
-  connectionOk: boolean
-}) {
+/* ---------- 主视图 ----------
+ * 数据流：useSessionList / useChatSession → HermesDataSource（当前为 Mock 实现）。
+ * 本组件只负责布局与 UI 状态（输入框、折叠），不直接读写 mock 数据。 */
+export function ChatView({ connectionOk }: { connectionOk: boolean }) {
   const [activeId, setActiveId] = useState('s1')
   const [input, setInput] = useState('')
-  const [extra, setExtra] = useState<ChatMessage[]>([])
-  const [runs, setRuns] = useState<ToolRun[]>(mockToolRuns)
-  const [sendingFor, setSendingFor] = useState<string | null>(null) // 思考中归属的会话
   const [listOpen, setListOpen] = useState(true)
-  const timers = useRef<number[]>([])
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // 计时器清理：卸载时清除全部
-  useEffect(() => () => { timers.current.forEach(t => window.clearTimeout(t)) }, [])
+  const sessions = useSessionList()
+  const {
+    messages, runs, sending, loading, approvals,
+    sessionPending, sessionDecided,
+    agentState, send, decide, retry
+  } = useChatSession(activeId)
 
-  const later = (ms: number, fn: () => void) => {
-    const id = window.setTimeout(() => {
-      timers.current = timers.current.filter(t => t !== id)
-      fn()
-    }, ms)
-    timers.current.push(id)
-  }
-
-  const messages = useMemo(
-    () => [...(mockMessages[activeId] ?? []), ...extra.filter(e => e.id.startsWith(activeId + '-'))],
-    [activeId, extra]
-  )
-  const sessionPending = pendingApprovalsForSession(approvals, activeId)
-  const sessionDecided = decidedApprovalsForSession(approvals, activeId)
-  const sessionRuns = useMemo(() => toolRunsForSession(runs, activeId), [runs, activeId])
-  const sessionHasError = sessionRuns.some(r => r.status === 'error')
-  const sessionHasRunning = sessionRuns.some(r => r.status === 'running')
-  const thinking = sendingFor === activeId
-
-  const agentState: AgentState =
-    !connectionOk ? 'idle'
-    : thinking ? 'thinking'
-    : sessionHasRunning ? 'tool-running'
-    : sessionHasError ? 'error'
-    : sessionPending.length > 0 ? 'awaiting-approval'
-    : 'idle'
   const meta = STATE_META[agentState]
+  const activeSession = sessions.find(s => s.id === activeId)
 
-  const send = (text?: string) => {
+  const handleSend = (text?: string) => {
     const t = (text ?? input).trim()
-    if (!t || sendingFor || !connectionOk) return
-    const sid = activeId
-    setSendingFor(sid)
-    const stamp = new Date().toTimeString().slice(0, 5)
-    const key = `${sid}-${Date.now()}`
-    setExtra(prev => [...prev, { id: `${key}-u`, role: 'user', text: t, time: stamp }])
+    if (!t || sending || !connectionOk) return
     setInput('')
-    // 模拟 tool-running 生命周期：running → ok
-    const runId = `${key}-run`
-    setRuns(prev => [...prev, { id: runId, sessionId: sid, name: 'agent.plan', status: 'running', duration: '', detail: '规划回复中（模拟）' }])
-    later(700, () => setRuns(prev => setToolRunStatus(prev, runId, 'ok', '规划完成（模拟）')))
-    later(1100, () => {
-      setRuns(prev => prev.map(r => (r.id === runId ? { ...r, duration: '1.1s' } : r)))
-      setExtra(prev => [...prev, {
-        id: `${key}-a`, role: 'assistant',
-        text: '（模拟回复）收到：「' + t.slice(0, 24) + (t.length > 24 ? '…' : '') + '」。真实集成后这里走 requestGateway("prompt.submit") 流式返回。',
-        time: new Date().toTimeString().slice(0, 5)
-      }])
-      setSendingFor(cur => (cur === sid ? null : cur))
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    })
-  }
-
-  // 失败重试的模拟反馈：error → running → ok（全部标注模拟）
-  const retryTool = (runId: string) => {
-    setRuns(prev => setToolRunStatus(prev, runId, 'running', '重试中（模拟）…'))
-    later(1200, () => setRuns(prev => setToolRunStatus(prev, runId, 'ok', '重试成功（模拟）').map(r =>
-      r.id === runId ? { ...r, duration: '1.2s' } : r)))
+    void send(t).then(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }))
   }
 
   const switchSession = (id: string) => {
@@ -307,7 +249,7 @@ export function ChatView({
 
   return (
     <div className="flex flex-1 min-h-0">
-      {/* 会话列表（可折叠） */}
+      {/* 会话列表（可折叠，数据来自 DataSource） */}
       {listOpen ? (
         <aside aria-label="会话列表" className="shrink-0 flex flex-col" style={{ width: 248, borderRight: '1px solid var(--border-subtle)' }}>
           <div className="px-3 pt-3 pb-2 flex items-center justify-between">
@@ -320,7 +262,7 @@ export function ChatView({
             </div>
           </div>
           <div className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-0.5" role="listbox" aria-label="选择会话">
-            {mockSessions.map(s => {
+            {sessions.map(s => {
               const active = activeId === s.id
               const pCount = pendingApprovalsForSession(approvals, s.id).length
               return (
@@ -363,7 +305,7 @@ export function ChatView({
       {/* 对话区 */}
       <section aria-label="对话" className="flex-1 flex flex-col min-w-0">
         <div className="hairline-b px-5 py-2.5 flex items-center gap-2">
-          <span className="font-semibold text-[14px]">{mockSessions.find(s => s.id === activeId)?.title}</span>
+          <span className="font-semibold text-[14px]">{activeSession?.title ?? '…'}</span>
           {sessionPending.length > 0 && (
             <span className="chip" style={{ color: 'var(--warning)', borderColor: 'var(--warning)' }}>
               <History size={11} aria-hidden />{sessionPending.length} 待审批
@@ -386,20 +328,22 @@ export function ChatView({
 
         <div className="flex-1 overflow-y-auto px-5 py-4" key={activeId}>
           <div className="reading-col view-enter">
-            {messages.length === 0 && !thinking ? (
+            {loading ? (
+              <div className="flex items-center gap-2 py-10 justify-center text-[12.5px]" style={{ color: 'var(--fg-tertiary)' }} role="status">
+                <Loader2 size={15} className="animate-spin" aria-hidden />加载会话中…
+              </div>
+            ) : messages.length === 0 && !sending ? (
               <EmptyState onSuggest={t => { setInput(t); inputRef.current?.focus() }} />
             ) : (
               <>
                 {(sessionPending.length > 0 || sessionDecided.length > 0) && (
                   <div className="flex flex-col gap-2.5 mb-4" aria-label="审批事项">
-                    {sessionPending.map(a => <ApprovalCard key={a.id} a={a} onDecide={onDecideApproval} />)}
-                    {sessionDecided.map(a => <ApprovalCard key={a.id} a={a} onDecide={onDecideApproval} />)}
+                    {sessionPending.map(a => <ApprovalCard key={a.id} a={a} onDecide={decide} />)}
+                    {sessionDecided.map(a => <ApprovalCard key={a.id} a={a} onDecide={decide} />)}
                   </div>
                 )}
-                {messages.map(m => (
-                  <MessageRow key={m.id} m={m} />
-                ))}
-                {thinking && (
+                {messages.map(m => <MessageRow key={m.id} m={m} />)}
+                {sending && (
                   <div className="flex items-center gap-2 text-[12px] py-2" style={{ color: 'var(--fg-tertiary)' }} role="status">
                     <Loader2 size={13} className="animate-spin" aria-hidden />
                     Hermes 正在输入（模拟）…
@@ -411,7 +355,7 @@ export function ChatView({
           </div>
         </div>
 
-        <ToolTimeline runs={sessionRuns} onRetry={retryTool} />
+        <ToolTimeline runs={runs} onRetry={retry} />
 
         <div className="p-4">
           <div className="reading-col">
@@ -428,11 +372,11 @@ export function ChatView({
                 disabled={!connectionOk}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
                   if (e.key === 'Escape') { inputRef.current?.blur() }
                 }}
               />
-              <button className="btn btn-primary" onClick={() => send()} disabled={!input.trim() || !!sendingFor || !connectionOk} aria-label="发送消息">
+              <button className="btn btn-primary" onClick={() => handleSend()} disabled={!input.trim() || sending || !connectionOk} aria-label="发送消息">
                 <SendHorizonal size={14} aria-hidden />发送
               </button>
             </div>

@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Shell, type ViewId } from './components/Shell'
-import { decideApprovals } from './lib/session-state'
-import { mockApprovals, type Approval } from './mock/data'
+import { useGlobalApprovals } from './hooks/useChatSession'
 import { useTheme } from './theme/theme'
 import { ChatView } from './views/ChatView'
 import { MemoryView } from './views/MemoryView'
@@ -13,13 +12,8 @@ import { TasksView } from './views/TasksView'
 export default function App() {
   const { mode, setMode } = useTheme()
   const [view, setView] = useState<ViewId>('chat')
-  const [approvals, setApprovals] = useState<Approval[]>(mockApprovals)
+  const { pendingCount } = useGlobalApprovals()
   const [connectionOk, setConnectionOk] = useState(true) // MOCK：模拟连接状态
-
-  const pendingCount = useMemo(() => approvals.filter(a => a.status === 'pending').length, [approvals])
-
-  const decideApproval = (id: string, ok: boolean) =>
-    setApprovals(prev => decideApprovals(prev, id, ok))
 
   return (
     <Shell
@@ -31,9 +25,7 @@ export default function App() {
       connectionOk={connectionOk}
       onToggleConnection={() => setConnectionOk(v => !v)}
     >
-      {view === 'chat' && (
-        <ChatView approvals={approvals} onDecideApproval={decideApproval} connectionOk={connectionOk} />
-      )}
+      {view === 'chat' && <ChatView connectionOk={connectionOk} />}
       {view === 'tasks' && <TasksView />}
       {view === 'skills' && <SkillsView />}
       {view === 'memory' && <MemoryView />}
