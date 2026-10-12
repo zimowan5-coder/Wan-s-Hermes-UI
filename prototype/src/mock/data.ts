@@ -112,7 +112,7 @@ export const mockMessages: Record<string, ChatMessage[]> = {
     { id: 'm1', role: 'assistant', text: '设计灵感已整理，共 4 个方向。要生成评审清单吗？', time: '昨天' }
   ],
   s4: [
-    { id: 'm1', role: 'user', text: '演示助手的人格里加一条：提醒事项按北京时间说', time: '昨天' }
+    { id: 'm1', role: 'user', text: '演示助手的人格里加一条：提醒按设备本地时间显示', time: '昨天' }
   ],
   s5: [
     { id: 'm1', role: 'assistant', text: '演示显示器 A 和 B 的尺寸与价格已录入比较表。', time: '10-10' }
@@ -150,7 +150,7 @@ export const mockTasks: TaskItem[] = [
   { id: 't2', title: '完善设计系统对比度检查', column: 'todo', tag: '网络' },
   { id: 't3', title: '产品简报第 5 期归档', column: 'done', tag: '日报' },
   { id: 't4', title: '设计参考资料整理', column: 'todo', tag: '点子' },
-  { id: 't5', title: 'Demo Assistant apply.ps1 回归体检', column: 'todo', tag: 'butler' }
+  { id: 't5', title: '演示项目回归体检', column: 'todo', tag: 'demo' }
 ]
 
 export const mockSkills: Skill[] = [
@@ -174,7 +174,7 @@ export const mockMemoryNodes: MemoryNode[] = [
   { id: 'n4', label: '产品简报', x: 120, y: 300, size: 14 },
   { id: 'n5', label: '设计灵感', x: 300, y: 330, size: 14 },
   { id: 'n6', label: 'Demo Assistant 演示助手', x: 480, y: 300, size: 14 },
-  { id: 'n7', label: 'Codex', x: 220, y: 200, size: 10 },
+  { id: 'n7', label: '协作', x: 220, y: 200, size: 10 },
   { id: 'n8', label: '演示项目', x: 390, y: 230, size: 10 }
 ]
 
