@@ -104,8 +104,7 @@ export function CommandPalette({
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(2px)' }} />
       <div role="dialog" aria-modal="true" aria-label="命令面板"
-        className="relative w-[560px] max-w-[92vw] h-fit rounded-2xl overflow-hidden view-enter"
-        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-lg)' }}>
+        className="glass-strong relative w-[560px] max-w-[92vw] h-fit overflow-hidden view-enter">
         <div className="flex items-center gap-2.5 px-4 hairline-b">
           <Search size={16} style={{ color: 'var(--fg-tertiary)' }} aria-hidden />
           <input

@@ -81,18 +81,18 @@ function CronTab() {
         </div>
       )}
 
-      <div className="flex flex-col gap-2" role="list" aria-label="定时任务列表">
+      <div className="grouped view-enter" role="list" aria-label="定时任务列表">
         {jobs.map(j => (
-          <div key={j.id} className="surface-overlay px-4 py-3 flex items-center gap-3 view-enter" role="listitem">
+          <div key={j.id} className="grouped-row" role="listitem">
             <button
               onClick={() => toggle(j.id)}
               className="w-9 h-5 rounded-full relative transition-colors shrink-0"
-              style={{ background: j.enabled ? 'var(--accent)' : 'var(--bg-tertiary)' }}
+              style={{ background: j.enabled ? 'var(--accent)' : 'var(--switch-off)' }}
               role="switch" aria-checked={j.enabled} aria-label={`${j.name} ${j.enabled ? '启用中' : '已暂停'}`}
               title={j.enabled ? '暂停' : '启用'}
             >
               <span className="absolute top-0.5 w-4 h-4 rounded-full transition-all"
-                style={{ left: j.enabled ? 18 : 2, background: 'var(--accent-fg)' }} />
+                style={{ left: j.enabled ? 18 : 2, background: 'var(--switch-thumb)', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
             </button>
             <div className="flex-1 min-w-0">
               <div className="text-[13.5px] font-medium truncate">{j.name}</div>
@@ -174,7 +174,7 @@ function KanbanTab() {
         {COLS.map(c => {
           const items = tasks.filter(t => t.column === c.id)
           return (
-            <div key={c.id} className="rounded-xl p-2.5" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+            <div key={c.id} className="rounded-xl p-2.5" style={{ background: 'var(--bg-sunken)' }}>
               <div className="flex items-center gap-1.5 px-1.5 pb-2 text-[12px] font-semibold" style={{ color: 'var(--fg-secondary)' }}>
                 {c.id === 'done' ? <CheckCircle2 size={13} style={{ color: 'var(--success)' }} aria-hidden /> : <CircleDashed size={13} aria-hidden />}
                 {c.label}
@@ -277,7 +277,7 @@ function OpsTab() {
               <p className="text-[12px] mt-1" style={{ color: 'var(--fg-tertiary)' }}>{op.desc}</p>
               {running && (
                 <div className="mt-2.5 rounded-lg p-2.5 font-mono text-[11.5px] leading-relaxed view-enter"
-                  style={{ background: 'var(--bg-tertiary)', color: 'var(--fg-secondary)' }} role="log" aria-label={`${op.name} 运行日志`}>
+                  style={{ background: 'var(--bg-sunken)', color: 'var(--fg-secondary)' }} role="log" aria-label={`${op.name} 运行日志`}>
                   {lines.map((ln, i) => <div key={i}>{ln}</div>)}
                   {lines.length < op.lines.length && <span className="animate-pulse">▊</span>}
                 </div>
@@ -304,18 +304,17 @@ export function TasksView() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-[880px] mx-auto p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[16px] font-bold">任务</h2>
-          <MockBadge />
-          <span className="text-[12px]" style={{ color: 'var(--fg-tertiary)' }}>定时任务 + 看板 + 运维（合并原生 cron 页、kanban 插件与维护面板）</span>
+        <div className="page-head">
+          <div className="flex items-center gap-2">
+            <h2 className="t-title">任务</h2>
+            <MockBadge />
+          </div>
+          <p className="t-sub page-desc">定时任务 · 看板 · 运维</p>
         </div>
-        <div className="flex gap-1 mb-5 p-1 rounded-xl w-fit" style={{ background: 'var(--bg-secondary)' }} role="tablist" aria-label="任务二级导航">
+        <div className="seg mb-5" role="tablist" aria-label="任务二级导航">
           {TABS.map(t => (
             <button key={t.id} role="tab" aria-selected={tab === t.id}
-              className="px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-colors"
-              style={tab === t.id
-                ? { background: 'var(--bg-primary)', color: 'var(--fg-primary)', boxShadow: 'var(--shadow-sm)' }
-                : { color: 'var(--fg-tertiary)' }}
+              className="seg-btn"
               onClick={() => setTab(t.id)}>
               {t.label}
             </button>
