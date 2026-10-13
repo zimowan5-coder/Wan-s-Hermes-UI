@@ -1,3 +1,4 @@
+import { onGroupKeyDown } from '../lib/keyboard'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Brain, Check, Clock, Link2, Plus, RotateCcw,
@@ -215,7 +216,7 @@ function EntriesTab() {
           />
           <div className="flex items-center gap-2 mt-2.5 flex-wrap">
             <span className="text-[12px]" style={{ color: 'var(--ui-fg-muted)' }}>类型</span>
-            <div className="flex gap-1.5" role="radiogroup" aria-label="记忆类型">
+            <div className="flex gap-1.5" role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="记忆类型">
               {(['fact', 'preference', 'project'] as const).map(k => (
                 <button
                   key={k}
@@ -481,20 +482,20 @@ function GraphTab() {
 export function MemoryView() {
   const [tab, setTab] = useState<'entries' | 'graph'>('entries')
   return (
-    <div className="flex-1 overflow-y-auto p-5">
-      <div className="page-head">
+    <div className="flex-1 overflow-y-auto">
+      <div className="content-page"><div className="page-head">
         <div className="flex items-center gap-2">
           <h2 className="t-title">记忆</h2>
           <MockBadge />
         </div>
         <p className="t-sub page-desc">长期记忆条目 · 知识图谱</p>
       </div>
-      <div className="seg mb-4" role="tablist" aria-label="记忆视图切换">
+      <div className="seg mb-4" role="tablist" onKeyDown={onGroupKeyDown} aria-label="记忆视图切换">
         {(['entries', 'graph'] as const).map(t => (
           <button
             key={t}
             role="tab"
-            aria-selected={tab === t}
+            aria-selected={tab === t} tabIndex={tab === t ? 0 : -1}
             onClick={() => setTab(t)}
             className="seg-btn"
           >
@@ -502,8 +503,8 @@ export function MemoryView() {
           </button>
         ))}
       </div>
-      <div className="view-enter" key={tab} role="tabpanel">
-        {tab === 'entries' ? <EntriesTab /> : <GraphTab />}
+      <div className="view-enter" hidden={tab !== 'entries'} role="tabpanel" aria-label="记忆条目"><EntriesTab/></div>
+      <div className="view-enter" hidden={tab !== 'graph'} role="tabpanel" aria-label="知识图谱"><GraphTab/></div>
       </div>
     </div>
   )

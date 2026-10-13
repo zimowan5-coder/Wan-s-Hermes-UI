@@ -2,134 +2,115 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { HermesDataSource } from '../data/HermesDataSource'
 import { getDataSource } from '../data/registry'
 import type { AgentState, Approval, ChatMessage, SessionSummary, ToolRun } from '../data/types'
-import {
-  decidedApprovalsForSession, pendingApprovalCount, pendingApprovalsForSession
-} from '../lib/session-state'
+import { decidedApprovalsForSession, pendingApprovalCount, pendingApprovalsForSession } from '../lib/session-state'
 
-/** 顶栏用：全局审批列表 + 决定操作 */
+const errorText = (e: unknown) => e instanceof Error ? e.message : String(e)
 export function useGlobalApprovals(ds: HermesDataSource = getDataSource()) {
   const [approvals, setApprovals] = useState<Approval[]>([])
-
   useEffect(() => {
     let cancelled = false
-    ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) })
-    const off = ds.onApprovalsChanged(() => {
-      ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) })
-    })
-    return () => { cancelled = true; off() }
+    const refresh = () => { void ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) }).catch(() => {}) }
+    refresh()
+    let off: (() => void) | undefined
+    try { off = ds.onApprovalsChanged(refresh) } catch { /* Live adapter may not support this yet. */ }
+    return () => { cancelled = true; off?.() }
   }, [ds])
-
-  const decide = useCallback(async (id: string, ok: boolean) => {
-    await ds.decideApproval(id, ok)
-    setApprovals(await ds.listApprovals())
-  }, [ds])
-
-  return { approvals, decide, pendingCount: pendingApprovalCount(approvals) }
+  return { approvals, pendingCount: pendingApprovalCount(approvals) }
 }
-
-/** 会话列表（Chat 工作台侧栏用） */
 export function useSessionList(ds: HermesDataSource = getDataSource()) {
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   useEffect(() => {
     let cancelled = false
-    ds.listSessions().then(s => { if (!cancelled) setSessions(s) })
+    ds.listSessions().then(s => { if (!cancelled) setSessions(s) }).catch(() => { if (!cancelled) setSessions([]) })
     return () => { cancelled = true }
   }, [ds])
   return sessions
 }
+interface SessionState {
+  messages: ChatMessage[]; runs: ToolRun[]; sending: boolean; loading: boolean;
+  error: string | null; actionError: string | null;
+}
+const emptyState = (): SessionState => ({ messages: [], runs: [], sending: false, loading: true, error: null, actionError: null })
 
-/**
- * useChatSession —— Chat 工作台的状态与交互层。
- * UI 组件只消费这里返回的状态与回调，不直接碰 DataSource、不直接碰 mock 数据。
- */
+/** All asynchronous updates retain their originating session key, including hidden sessions. */
 export function useChatSession(sessionId: string, ds: HermesDataSource = getDataSource()) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [cache, setCache] = useState<Record<string, SessionState>>({})
   const [approvals, setApprovals] = useState<Approval[]>([])
-  const [runs, setRuns] = useState<ToolRun[]>([])
-  const [sending, setSending] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const timers = useRef<number[]>([])
+  const [loadVersion, setLoadVersion] = useState(0)
+  const mounted = useRef(true)
+  const inflight = useRef(new Set<string>())
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  const patch = useCallback((id: string, update: (prev: SessionState) => SessionState) => {
+    if (mounted.current) setCache(prev => ({ ...prev, [id]: update(prev[id] ?? emptyState()) }))
+  }, [])
+  const state = cache[sessionId] ?? emptyState()
 
-  useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
-
-  // 会话切换：重新加载该会话的三类状态；订阅审批变更。
-  // 逐个 settle：live 模式下部分方法尚未实现，失败的那路只记 error，不卡死其他路。
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setSending(false)
-    setError(null)
-    const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
-    Promise.allSettled([ds.getMessages(sessionId), ds.listApprovals(), ds.listToolRuns(sessionId)]).then(
-      ([m, a, r]) => {
-        if (cancelled) return
-        if (m.status === 'fulfilled') setMessages(m.value)
-        if (a.status === 'fulfilled') setApprovals(a.value)
-        if (r.status === 'fulfilled') setRuns(r.value)
-        const firstErr = [m, a, r].find(x => x.status === 'rejected')
-        if (firstErr) setError(errMsg((firstErr as PromiseRejectedResult).reason))
-        setLoading(false)
-      }
-    )
+    patch(sessionId, p => ({ ...p, loading: true, error: null }))
+    Promise.allSettled([ds.getMessages(sessionId), ds.listApprovals(), ds.listToolRuns(sessionId)]).then(([m, a, r]) => {
+      if (cancelled) return
+      if (a.status === 'fulfilled') setApprovals(a.value)
+      const rejected = [m, a, r].find(x => x.status === 'rejected') as PromiseRejectedResult | undefined
+      patch(sessionId, p => ({ ...p,
+        // Existing streaming updates win over an older load snapshot.
+        messages: m.status === 'fulfilled' ? (inflight.current.has(sessionId) ? [...new Map([...m.value, ...p.messages].map(msg => [msg.id, msg])).values()] : m.value) : p.messages,
+        runs: r.status === 'fulfilled' ? r.value : p.runs,
+        loading: false, error: rejected ? errorText(rejected.reason) : null
+      }))
+    })
     let off: (() => void) | undefined
-    try {
-      off = ds.onApprovalsChanged(() => {
-        ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) }).catch(() => {})
-      })
-    } catch (e) {
-      if (!cancelled) setError(errMsg(e))
-    }
+    try { off = ds.onApprovalsChanged(() => { ds.listApprovals().then(a => { if (!cancelled) setApprovals(a) }).catch(() => {}) }) }
+    catch (e) { patch(sessionId, p => ({ ...p, error: errorText(e) })) }
     return () => { cancelled = true; off?.() }
-  }, [ds, sessionId])
+  }, [ds, sessionId, loadVersion, patch])
 
-  const refreshRuns = useCallback(async () => {
-    setRuns(await ds.listToolRuns(sessionId))
-  }, [ds, sessionId])
+  const refreshRuns = useCallback(async (id: string) => {
+    const runs = await ds.listToolRuns(id)
+    patch(id, p => ({ ...p, runs }))
+  }, [ds, patch])
+  // Observe current-session tool lifecycle until settled; cancel polling on session switch.
+  const hasRunning = state.runs.some(r => r.status === 'running')
+  useEffect(() => {
+    if (!hasRunning) return
+    let cancelled = false
+    const timer = window.setInterval(() => {
+      ds.listToolRuns(sessionId).then(runs => { if (!cancelled) patch(sessionId, p => ({ ...p, runs })) }).catch(() => {})
+    }, 400)
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [hasRunning, ds, sessionId, patch])
 
-  const send = useCallback(async (text: string) => {
-    const t = text.trim()
-    if (!t || !sessionId) return
-    setSending(true)
-    // 工具生命周期：running →（mock 700ms 后）ok
-    await ds.runTool(sessionId, 'agent.plan', '规划回复中（模拟）')
-    await refreshRuns()
-    for await (const msg of ds.sendMessage(sessionId, t)) {
-      setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, msg]))
+  const send = useCallback(async (text: string): Promise<boolean> => {
+    const id = sessionId, t = text.trim()
+    if (!t || !id || inflight.current.has(id)) return false
+    inflight.current.add(id)
+    patch(id, p => ({ ...p, sending: true, actionError: null }))
+    try {
+      // Demo tool simulation never leaks into the future live integration path.
+      if (ds.kind === 'mock') { await ds.runTool(id, 'agent.plan', '规划回复中（模拟）'); await refreshRuns(id) }
+      for await (const msg of ds.sendMessage(id, t)) {
+        patch(id, p => ({ ...p, messages: p.messages.some(m => m.id === msg.id) ? p.messages.map(m => m.id === msg.id ? msg : m) : [...p.messages, msg] }))
+      }
+      await refreshRuns(id)
+      return true
+    } catch (e) {
+      patch(id, p => ({ ...p, actionError: errorText(e) }))
+      return false
+    } finally {
+      inflight.current.delete(id)
+      patch(id, p => ({ ...p, sending: false }))
     }
-    await refreshRuns()
-    setSending(false)
-  }, [ds, sessionId, refreshRuns])
-
+  }, [ds, sessionId, patch, refreshRuns])
   const decide = useCallback(async (id: string, ok: boolean) => {
-    await ds.decideApproval(id, ok)
-    setApprovals(await ds.listApprovals())
-  }, [ds])
-
-  const retry = useCallback(async (runId: string) => {
-    await ds.retryToolRun(runId)
-    await refreshRuns()
-    // mock 1200ms 后转为 ok，届时再刷新一次
-    const timer = window.setTimeout(() => {
-      ds.listToolRuns(sessionId).then(setRuns)
-    }, 1500)
-    timers.current.push(timer)
-  }, [ds, sessionId, refreshRuns])
-
+    try { await ds.decideApproval(id, ok); const next = await ds.listApprovals(); if (mounted.current) setApprovals(next); return true }
+    catch (e) { patch(sessionId, p => ({ ...p, actionError: errorText(e) })); return false }
+  }, [ds, sessionId, patch])
+  const retry = useCallback(async (id: string) => {
+    try { await ds.retryToolRun(id); await refreshRuns(sessionId) }
+    catch (e) { patch(sessionId, p => ({ ...p, actionError: errorText(e) })) }
+  }, [ds, sessionId, patch, refreshRuns])
   const sessionPending = useMemo(() => pendingApprovalsForSession(approvals, sessionId), [approvals, sessionId])
   const sessionDecided = useMemo(() => decidedApprovalsForSession(approvals, sessionId), [approvals, sessionId])
-
-  const agentState: AgentState =
-    sending ? 'thinking'
-    : runs.some(r => r.status === 'running') ? 'tool-running'
-    : runs.some(r => r.status === 'error') ? 'error'
-    : sessionPending.length > 0 ? 'awaiting-approval'
-    : 'idle'
-
-  return {
-    messages, runs, sending, loading, error,
-    approvals, // 全部审批（用于会话列表徽标等全局派生）
-    sessionPending, sessionDecided,
-    agentState, send, decide, retry
-  }
+  const agentState: AgentState = state.sending ? 'thinking' : hasRunning ? 'tool-running' : state.runs.some(r => r.status === 'error') ? 'error' : sessionPending.length ? 'awaiting-approval' : 'idle'
+  return { ...state, approvals, sessionPending, sessionDecided, agentState, send, decide, retry, reload: () => setLoadVersion(n => n + 1) }
 }

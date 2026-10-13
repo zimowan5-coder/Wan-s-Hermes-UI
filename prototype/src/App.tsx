@@ -21,6 +21,7 @@ export default function App() {
       return v === 'tasks' || v === 'skills' || v === 'memory' || v === 'messaging' || v === 'settings' ? v : 'chat'
     } catch { return 'chat' }
   })
+  const [newChatRequest, setNewChatRequest] = useState(0)
   const { pendingCount } = useGlobalApprovals()
   const [connectionOk, setConnectionOk] = useState(true) // MOCK：模拟连接状态
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -37,13 +38,14 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const commands = useMemo(() => buildCommands({    go: setView,
+  const commands = useMemo(() => buildCommands({
+    go: setView,
     cycleTheme: () => {
       const i = THEME_CYCLE.indexOf(mode)
       setMode(THEME_CYCLE[(i + 1) % THEME_CYCLE.length])
     },
     toggleConnection: () => setConnectionOk(v => !v),
-    newChat: () => setView('chat'), // MOCK：原型中新会话即回到聊天
+    newChat: () => { setView('chat'); setNewChatRequest(n => n + 1) }, // Select the existing empty mock session, not a fabricated backend session.
     connectionOk
   }), [mode, connectionOk, setMode])
 
@@ -57,12 +59,12 @@ export default function App() {
         onToggleConnection={() => setConnectionOk(v => !v)}
         onOpenPalette={() => setPaletteOpen(true)}
       >
-        {view === 'chat' && <ChatView connectionOk={connectionOk} />}
-        {view === 'tasks' && <TasksView />}
-        {view === 'skills' && <SkillsView />}
-        {view === 'memory' && <MemoryView />}
-        {view === 'messaging' && <MessagingView />}
-        {view === 'settings' && <SettingsView />}
+        <div className="view-pane" hidden={view !== 'chat'}><ChatView connectionOk={connectionOk} newChatRequest={newChatRequest} /></div>
+        <div className="view-pane" hidden={view !== 'tasks'}><TasksView /></div>
+        <div className="view-pane" hidden={view !== 'skills'}><SkillsView /></div>
+        <div className="view-pane" hidden={view !== 'memory'}><MemoryView /></div>
+        <div className="view-pane" hidden={view !== 'messaging'}><MessagingView /></div>
+        <div className="view-pane" hidden={view !== 'settings'}><SettingsView /></div>
       </Shell>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
     </>

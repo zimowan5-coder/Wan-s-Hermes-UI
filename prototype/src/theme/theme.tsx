@@ -17,9 +17,9 @@ const MEDIA_QUERY = '(prefers-color-scheme: dark)'
  * 跨实例同步：同一页面内多次调用 useTheme()（如顶栏 + 设置页）时，
  * 任意一处 setMode 都会广播，其他实例重新读取并更新，保证两处 UI 同步。
  */
-const syncListeners = new Set<() => void>()
-function broadcastThemeChange() {
-  syncListeners.forEach(fn => fn())
+const syncListeners = new Set<(mode: ThemeMode) => void>()
+function broadcastThemeChange(mode: ThemeMode) {
+  syncListeners.forEach(fn => fn(mode))
 }
 
 function readQueryOverride(): ThemeMode | null {
@@ -54,7 +54,7 @@ export function useTheme() {
 
   // 跨实例同步：监听其他 useTheme 实例的 setMode
   useEffect(() => {
-    const sync = () => setModeState(readStored())
+    const sync = (next: ThemeMode) => setModeState(next)
     syncListeners.add(sync)
     return () => { syncListeners.delete(sync) }
   }, [])
@@ -87,7 +87,7 @@ export function useTheme() {
     } catch {
       /* 隐私模式等写入失败时仅本次生效 */
     }
-    broadcastThemeChange()
+    broadcastThemeChange(m)
   }, [])
 
   return { mode, resolved, setMode }
