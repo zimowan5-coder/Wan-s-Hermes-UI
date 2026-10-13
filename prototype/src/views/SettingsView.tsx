@@ -306,7 +306,7 @@ export function SettingsView() {
                     })}
                   </div>
                   <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
-                    与顶栏切换器同步；「跟随系统」实时响应 Windows 主题变化。
+                    「跟随系统」实时响应 Windows 主题变化；也可用命令面板快速切换。
                   </p>
                 </Card>
 
