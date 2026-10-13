@@ -148,30 +148,37 @@ function MessageRow({ m }: { m: ChatMessage }) {
     )
   }
   const mine = m.role === 'user'
+  if (!mine) {
+    /* 助手消息：纯文本排版，无气泡（内容优先） */
+    return (
+      <div className="msg-stream py-2 group">
+        <div className="text-[14px] leading-[1.65] whitespace-pre-wrap" style={{ color: 'var(--fg-primary)' }}>
+          {m.text}
+        </div>
+        <div className="text-[10px] mt-1 opacity-60 flex items-center gap-2">
+          <span style={{ color: 'var(--fg-tertiary)' }}>{m.time}</span>
+          <button
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center gap-1 rounded px-1 py-0.5"
+            style={{ color: 'var(--fg-tertiary)' }}
+            onClick={copy}
+            aria-label={copied ? '已复制' : '复制消息'}
+            title="复制消息"
+          >
+            {copied ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
+            {copied && <span className="text-[10px]">已复制</span>}
+          </button>
+        </div>
+      </div>
+    )
+  }
   return (
-    <div className={`msg-stream flex ${mine ? 'justify-end' : 'justify-start'} py-1.5 group`}>
+    <div className="msg-stream flex justify-end py-1.5">
       <div
-        className="max-w-[85%] px-3.5 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap relative"
-        style={mine
-          ? { background: 'var(--accent)', color: 'var(--accent-fg)', borderRadius: 'var(--radius-lg) var(--radius-lg) 4px var(--radius-lg)' }
-          : { background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px' }}
+        className="max-w-[80%] px-4 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap"
+        style={{ background: 'var(--accent)', color: 'var(--accent-fg)', borderRadius: '18px 18px 6px 18px' }}
       >
         {m.text}
-        <div className="text-[10px] mt-1 opacity-60 flex items-center gap-2">
-          <span>{m.time}</span>
-          {!mine && (
-            <button
-              className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center gap-1 rounded px-1 py-0.5"
-              style={{ color: 'var(--fg-tertiary)' }}
-              onClick={copy}
-              aria-label={copied ? '已复制' : '复制消息'}
-              title="复制消息"
-            >
-              {copied ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
-              {copied && <span className="text-[10px]">已复制</span>}
-            </button>
-          )}
-        </div>
+        <div className="text-[10px] mt-1 opacity-70">{m.time}</div>
       </div>
     </div>
   )
@@ -271,8 +278,7 @@ function SlashMenu({
 }) {
   return (
     <div role="listbox" aria-label="slash 命令联想"
-      className="absolute bottom-full mb-2 left-0 right-0 rounded-xl overflow-hidden view-enter"
-      style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-lg)' }}>
+      className="surface-overlay absolute bottom-full mb-2 left-0 right-0 overflow-hidden view-enter">
       <div className="px-3 pt-2 pb-1 flex items-center gap-2">
         <span className="text-[10.5px] font-semibold uppercase tracking-wide" style={{ color: 'var(--fg-tertiary)' }}>slash 命令</span>
         <MockBadge label="MOCK" />
@@ -398,10 +404,12 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
                   role="option"
                   aria-selected={active}
                   onClick={() => switchSession(s.id)}
-                  className="text-left px-3 py-2.5 rounded-lg transition-colors"
+                  className="text-left w-full px-3 py-2.5 transition-colors"
                   style={active
-                    ? { background: 'var(--accent-soft)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-sm)' }
-                    : { border: '1px solid transparent', borderRadius: 'var(--radius-sm)' }}
+                    ? { background: 'var(--accent-soft)', borderRadius: 10 }
+                    : { borderRadius: 10 }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-fill)' }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-medium truncate flex-1">{s.title}</span>
@@ -493,9 +501,10 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
 
         <ToolTimeline runs={runs} onRetry={retry} />
 
-        <div className="p-4">
+        <div className="px-4 pb-3 pt-1">
           <div className="reading-col">
-            <div className="surface-overlay p-2 flex items-end gap-2 relative">
+            <div className="p-2 pl-4 flex items-end gap-2 relative"
+              style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', borderRadius: 20, boxShadow: 'var(--shadow-sm)' }}>
               <label htmlFor="composer" className="sr-only">输入消息，Enter 发送，Shift+Enter 换行，/ 唤起命令联想</label>
               {slashOpen && (
                 <SlashMenu matches={slashMatches} active={slashActive} onSelect={insertSlash} onHover={setSlashActive} />
@@ -503,8 +512,8 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
               <textarea
                 id="composer"
                 ref={inputRef}
-                className="input flex-1"
-                style={{ border: 'none', background: 'transparent', resize: 'none', boxShadow: 'none' }}
+                className="flex-1"
+                style={{ border: 'none', background: 'transparent', resize: 'none', boxShadow: 'none', outline: 'none', fontSize: '13.5px', color: 'var(--fg-primary)', padding: '8px 0' }}
                 rows={2}
                 placeholder={connectionOk ? '输入消息… / 唤起命令，Enter 发送（原型：返回模拟回复）' : '已断连（模拟），无法发送'}
                 value={input}
@@ -515,11 +524,11 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
                 onClick={syncCursor}
                 onKeyDown={onComposerKeyDown}
               />
-              <button className="btn btn-primary" onClick={() => handleSend()} disabled={!input.trim() || sending || !connectionOk} aria-label="发送消息">
-                <SendHorizonal size={14} aria-hidden />发送
+              <button className="btn btn-primary" style={{ borderRadius: '50%', width: 34, height: 34, padding: 0 }} onClick={() => handleSend()} disabled={!input.trim() || sending || !connectionOk} aria-label="发送消息">
+                <SendHorizonal size={15} aria-hidden />
               </button>
             </div>
-            <p className="text-[11px] mt-1.5 text-center" style={{ color: 'var(--fg-tertiary)' }}>
+            <p className="t-micro mt-2 text-center">
               Enter 发送 · Shift+Enter 换行 · Esc 取消聚焦
             </p>
           </div>
