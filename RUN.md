@@ -1,61 +1,51 @@
-# 运行指南 · Hermes UI 原型
+# 运行与验证 · v0.5
 
-> 分支：`feature/ui-prototype`
-> 全部为模拟数据，不连接真实 Hermes 后端。详见 `DESIGN.md`。
-
-## 环境要求
-
-- Node.js ≥ 20（上游桌面要求 Node 22+；本原型仅需 20+）
-- npm ≥ 10
+本轮：`feature/ui-craft-refinement`，基于 `feature/ui-prototype`。默认演示数据，不连接真实 Hermes。
 
 ## 启动
 
+Node.js 22+，npm 10+：
+
 ```bash
 cd prototype
-npm install
+npm ci
 npm run dev
+# http://127.0.0.1:5174
 ```
 
-浏览器打开终端输出的地址（默认 `http://127.0.0.1:5174`）。
-
-## 可点的交互
-
-| 位置 | 操作 | 说明 |
-|---|---|---|
-| 左导航 | 切换 6 个工作台 | 聊天 / 任务 / 技能 / 记忆 / 消息 / 设置 |
-| 聊天 → 会话列表 | 切换会话 | 每个会话有独立模拟消息 |
-| 聊天 → 审批卡 | 批准 / 拒绝 | 本地状态机，卡片变为"已批准/已拒绝" |
-| 聊天 → 输入框 | 发送消息 | 900ms 后返回模拟回执（标注"模拟回复"） |
-| 任务 → 定时任务 | 开关 toggle | 本地状态 |
-| 任务 → 看板 | 浏览三列 | 静态模拟 |
-| 技能 → 卡片开关 | 启用/禁用 | 本地状态 |
-| 记忆 | 条目 / 图谱 tab | 图谱为静态 SVG 示意 |
-| 消息 → 微信 | 扫码连接按钮 | 仅示意，无真实动作 |
-| 设置 | Profile / 模型 / 连接 tab | 模型下拉、推理强度滑杆均为本地状态 |
-
-## 构建验证
+## 验证
 
 ```bash
-cd prototype
-npm run build   # tsc 类型检查 + vite 构建
+npm run build
+npm test
+npm run preview
+# 保持生产预览运行，另开终端：
+npx playwright install chromium
+npm run test:ui
 ```
 
-## 目录结构
+已有系统 Chromium 时可指定路径：
 
-```
-Wan-s-Hermes-UI/
-├── README.md            # 项目总览
-├── DESIGN.md            # 研究结论、IA 设计、集成点、未确认清单
-├── RUN.md               # 本文件
-└── prototype/           # 可运行原型（Vite + React + TS + Tailwind）
-    ├── src/mock/data.ts # 唯一数据源（MOCK=true，全部模拟）
-    ├── src/components/  # Shell、MockBadge
-    ├── src/views/       # 6 个工作台视图
-    └── src/index.css    # 设计 tokens（--ui-*）
+```bash
+UI_CHROMIUM_PATH=/usr/bin/chromium npm run test:ui
 ```
 
-## 限制
+`UI_BASE_URL` 可覆盖预览地址（默认 `http://127.0.0.1:4174`）。浏览器脚本会重写 `docs/UI-QA-RESULTS.json` 和 `docs/screenshots/v05/`，仅使用模拟内容。它检测外部网络请求，不会主动连接后端。`UI_CHROMIUM_PATH` 使用 `--no-sandbox` 仅适用于隔离 CI/容器，普通环境可使用 Playwright 安装的浏览器。
 
-- 不连接后端：所有"发送/开关/审批"只改本地状态，刷新即重置
-- 未覆盖：Artifacts 预览、Terminal、命令面板（见 DESIGN.md §5）
-- 样式为深色单主题；浅色主题与响应式未做
+## 可以实际尝试
+
+- 六工作台与浅/深/系统主题，工具栏日月按钮快速切换；Ctrl/⌘ K 搜索命令。
+- 会话搜索、会话草稿、Shift+Enter 多行、slash 联想、消息复制反馈。
+- 待审批跳转、危险审批二次确认、工具执行记录与失败重试。
+- 顶栏演示连接状态：断连后禁用发送，恢复保留草稿。
+- 定时任务：搜索、新建、暂停、模拟运行；看板：详情、进度、移动、删除撤销。
+- 紧凑窗口会话抽屉，小屏导航抽屉、纵向看板。
+- Tab/Shift+Tab、Esc、方向键、Home/End；系统减少动态偏好。
+
+## 数据边界
+
+刷新重置模拟业务状态与草稿；主题与导航偏好本地持久化。新会话操作打开已有空白演示会话；Profile 仅本页模拟选择。二维码、Token、任务和诊断均为模拟，请勿输入真实凭据。
+
+现有 `VITE_DATA=live` 适配器只具备原文档列出的有限能力，见 `docs/INTEGRATION-PLAN.md`。本轮没有配置或验证真实 Gateway。无障碍自动检查不代替真机/屏幕阅读器验证。
+
+QA 参数：`?theme=light|dark|system`、`?view=tasks|skills|memory|messaging|settings`、`?notransition=1`。

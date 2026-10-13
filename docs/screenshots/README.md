@@ -1,3 +1,24 @@
+# v0.5 实际运行截图
+
+日期：2026-10-13 UTC。分支：`feature/ui-craft-refinement`。真实 Chromium 154.0.8037.57，`npm run build` 后的 `vite preview` 生产构建。全部模拟数据，不是概念图。
+
+桌面截图 1440×900；移动截图 390×844；deviceScaleFactor=1。截图采用 `prefers-reduced-motion: reduce` 与 `?notransition=1` 捕获稳定帧，交互仍由真实浏览器执行。生产文件指纹见 [验证报告](../UI-QA-RESULTS.json)。
+
+| 页面 | 浅色 | 深色 |
+|---|---|---|
+| 聊天与审批 | [chat-light.png](v05/chat-light.png) | [chat-dark.png](v05/chat-dark.png) |
+| 空会话 | [empty-light.png](v05/empty-light.png) | [empty-dark.png](v05/empty-dark.png) |
+| 定时任务 | [tasks-light.png](v05/tasks-light.png) | [tasks-dark.png](v05/tasks-dark.png) |
+| 任务看板 | [board-light.png](v05/board-light.png) | [board-dark.png](v05/board-dark.png) |
+
+补充：[390px 聊天](v05/chat-mobile.png) · [深色命令面板](v05/command-dark.png)。全部 10 张完整 PNG 已入库。
+
+可复现命令见 [RUN.md](../../RUN.md)。验证：36 个主页面/主题/尺寸组合、24 个二级页面/浮层状态、17 项关键交互；无页面横向溢出、无被检测的 axe 规则问题、无浏览器 JS 错误。自动检查范围不等于完整 WCAG 认证。
+
+---
+
+以下为历史截图记录，保留以便比较。
+
 # 截图说明
 
 > 真实运行截图，非概念图。捕获方法见下。

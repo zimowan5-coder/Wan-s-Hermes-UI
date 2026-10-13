@@ -60,3 +60,12 @@ LiveDataSource 实现前必须先在官方源码中确认方法名与载荷。
 1. `LiveDataSource` 尚未实现 —— 真实方法名需逐个验证后才能写。
 2. 流式消息的增量合并策略（chunks → Message）需对照上游 `assistant-ui` 实现。
 3. 审批事件的推送通道（WS topic 名）待验证，目前只验证了消费侧语义。
+
+
+## v0.5 渲染器状态精修
+
+保持四层边界。`useChatSession` 缓存按 sessionId 分组，异步回显与完成留在来源会话，加载/发送错误明确反馈；不改变 HermesDataSource 契约。只在 mock 路径调用模拟规划工具，live 限制仍按现有集成文档。
+
+`App` 保留工作台面板的本次状态；Chat 草稿、搜索、抽屉和任务详情是 UI 本地状态。原生 `Modal` 负责背景隔离、键盘边界与焦点返回。业务模拟数据刷新重置，不宣称持久化或真实执行。
+
+浏览器回归与证据见 `UI-REFINEMENT.md`、`UI-QA-RESULTS.json`。
