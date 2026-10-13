@@ -271,25 +271,21 @@ export function MessagingView() {
 
   return (
     <div className="flex-1 overflow-y-auto p-5">
-      <div className="flex items-center gap-2 mb-1">
-        <h2 className="text-[16px] font-bold">消息</h2>
-        <MockBadge />
+      <div className="page-head">
+        <div className="flex items-center gap-2">
+          <h2 className="t-title">消息</h2>
+          <MockBadge />
+        </div>
+        <p className="t-sub page-desc">网关通道状态 · 事件推送规则</p>
       </div>
-      <p className="text-[12.5px] mb-4" style={{ color: 'var(--fg-secondary)' }}>
-        对应原生 Messaging / Webhooks 页：个人网关通道状态与事件推送规则。
-      </p>
 
       {/* 二级 tab */}
-      <div role="tablist" aria-label="消息设置" className="inline-flex p-1 rounded-lg mb-4"
-        style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border-subtle)' }}>
+      <div role="tablist" aria-label="消息设置" className="seg mb-4">
         {(['channels', 'webhooks'] as const).map(t => (
           <button
             key={t} role="tab" aria-selected={tab === t}
             onClick={() => setTab(t)}
-            className="px-4 py-1.5 text-[13px] rounded-md"
-            style={tab === t
-              ? { background: 'var(--bg-raised)', color: 'var(--fg-primary)', fontWeight: 600, boxShadow: 'var(--shadow-sm)', transition: 'all 180ms var(--ease-out)' }
-              : { color: 'var(--fg-secondary)', transition: 'all 180ms var(--ease-out)' }}
+            className="seg-btn"
           >
             {t === 'channels' ? '通道' : 'Webhooks'}
           </button>
@@ -298,20 +294,20 @@ export function MessagingView() {
 
       {tab === 'channels' && (
         <div className="view-enter max-w-[760px]">
-          <div className="flex items-start gap-2 px-4 py-3 rounded-lg mb-3 text-[12.5px]"
-            style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-border)', color: 'var(--fg-secondary)' }}>
+          <div className="flex items-start gap-2 px-4 py-3 mb-3 text-[12.5px]"
+            style={{ background: 'var(--accent-soft)', borderRadius: 12, color: 'var(--fg-secondary)' }}>
             <Info size={14} className="shrink-0 mt-0.5" style={{ color: 'var(--accent)' }} aria-hidden />
             <span>消息网关为<strong style={{ color: 'var(--fg-primary)' }}>独立 detached 进程</strong>，不随应用退出而停止 —— 呼应原生设计：通道断开仅解绑本机，网关本身继续运行。</span>
           </div>
 
-          <div className="flex flex-col gap-2.5" aria-live="polite">
+          <div className="grouped view-enter" aria-live="polite">
             {channels.map(c => (
-              <div key={c.id} className="flat-panel px-4 py-3.5">
-                <div className="flex items-center gap-3">
+              <div key={c.id}>
+                <div className="grouped-row" style={{ alignItems: 'flex-start' }}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                     style={{
                       background: c.status === 'connected' ? 'var(--success-soft)' : 'var(--bg-sunken)',
-                      border: '1px solid var(--border-subtle)',
                       color: c.status === 'connected' ? 'var(--success)' : 'var(--fg-tertiary)'
                     }}>
                     {channelIcon(c.id)}
@@ -345,7 +341,9 @@ export function MessagingView() {
                     </>
                   )}
                 </div>
+                </div>
 
+                <div className="px-4 pb-4">
                 {/* Telegram 两步验证（卡片内展开） */}
                 {c.id === 'telegram' && c.status === 'disconnected' && (
                   <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
@@ -406,15 +404,16 @@ export function MessagingView() {
                 {/* Webhook 入站地址（卡片内展开） */}
                 {c.id === 'webhook-in' && c.status === 'connected' && (
                   <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                    <code className="flex-1 text-[12px] px-3 py-2 rounded-md truncate"
-                      style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border-subtle)', color: 'var(--fg-secondary)' }}>
+                    <code className="flex-1 min-w-0 text-[12px] px-3 py-2 rounded-md truncate"
+                      style={{ background: 'var(--bg-sunken)', color: 'var(--fg-secondary)' }}>
                       {INBOUND_URL}
                     </code>
-                    <button className="btn" style={{ padding: '6px 12px', fontSize: 12 }} onClick={copyInbound} aria-live="polite">
+                    <button className="btn shrink-0" style={{ padding: '6px 12px', fontSize: 12 }} onClick={copyInbound} aria-live="polite">
                       {copied ? <><Check size={13} aria-hidden style={{ color: 'var(--success)' }} />已复制</> : <><Copy size={13} aria-hidden />复制 URL（模拟）</>}
                     </button>
                   </div>
                 )}
+                </div>
               </div>
             ))}
           </div>
