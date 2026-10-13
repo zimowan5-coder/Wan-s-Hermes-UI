@@ -61,9 +61,9 @@ const TABS: { id: TabId; label: string }[] = [
 ]
 
 const TAB_INTRO: Record<TabId, string> = {
-  skills: '对应原生 Capabilities → Skills。真实集成时经 commands.catalog 读取技能派生的 slash 命令，开关经后端启用接口（待验证）。',
-  connectors: '对应原生 Capabilities → Connectors。连接器给 Agent 带来外部能力；断开后相关工具立即不可用（模拟）。',
-  toolsets: '对应原生 Capabilities → Toolsets。工具集按 scope 划分能力边界，关闭后该集合的工具不再被调用（模拟）。',
+  skills: '管理 Agent 的技能：开关控制是否可用，展开查看派生的 slash 命令。',
+  connectors: '连接器为 Agent 带来外部能力；断开后相关工具立即不可用（模拟）。',
+  toolsets: '工具集按作用域划分能力边界；关闭后该集合的工具不再被调用（模拟）。',
   agents: ''
 }
 
@@ -80,8 +80,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
       className="shrink-0 rounded-full relative"
       style={{
         width: 40, height: 23,
-        background: checked ? 'var(--accent)' : 'var(--bg-sunken)',
-        border: '1px solid var(--border-subtle)',
+        background: checked ? 'var(--accent)' : 'var(--switch-off)',
         transition: 'background-color var(--motion-normal) var(--ease-out)'
       }}
     >
@@ -90,7 +89,8 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
         className="absolute top-1/2 rounded-full"
         style={{
           width: 17, height: 17,
-          background: checked ? 'var(--accent-fg)' : 'var(--fg-tertiary)',
+          background: 'var(--switch-thumb)',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
           transform: 'translateY(-50%)',
           left: checked ? 20 : 3,
           transition: 'left var(--motion-normal) var(--ease-out), background-color var(--motion-normal)'
@@ -119,7 +119,7 @@ function EmptyState({ icon, text, actionLabel, onAction }: {
 
 function Row({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-4 py-3.5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+    <div className="grouped-row" style={{ display: 'block', padding: '14px 16px' }}>
       {children}
     </div>
   )
@@ -201,34 +201,27 @@ export function SkillsView() {
     <div className="flex-1 overflow-y-auto">
       <div className="reading-col px-5 pt-5 pb-8">
         {/* 标题区 */}
-        <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-[17px] font-bold" style={{ color: 'var(--fg-primary)' }}>技能</h2>
-          <MockBadge />
+        <div className="page-head">
+          <div className="flex items-center gap-2">
+            <h2 className="t-title" style={{ color: 'var(--fg-primary)' }}>技能</h2>
+            <MockBadge />
+          </div>
+          {tab !== 'agents' && (
+            <p className="t-sub page-desc">
+              {TAB_INTRO[tab]}
+            </p>
+          )}
         </div>
-        {tab !== 'agents' && (
-          <p className="text-[12.5px] mb-4 leading-relaxed" style={{ color: 'var(--fg-secondary)' }}>
-            {TAB_INTRO[tab]}
-          </p>
-        )}
 
         {/* 二级 tab */}
-        <div role="tablist" aria-label="技能工作台二级导航"
-          className="inline-flex p-1 rounded-full mb-5"
-          style={{ background: 'var(--bg-sunken)' }}>
+        <div role="tablist" aria-label="技能工作台二级导航" className="seg mb-5">
           {TABS.map(t => (
             <button
               key={t.id}
               role="tab"
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              className="px-4 py-1.5 text-[13px] rounded-full"
-              style={{
-                fontWeight: tab === t.id ? 600 : 400,
-                color: tab === t.id ? 'var(--fg-primary)' : 'var(--fg-secondary)',
-                background: tab === t.id ? 'var(--bg-raised)' : 'transparent',
-                boxShadow: tab === t.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all var(--motion-normal) var(--ease-out)'
-              }}
+              className="seg-btn"
             >
               {t.label}
             </button>
@@ -259,7 +252,7 @@ export function SkillsView() {
                 onAction={query.trim() ? () => setQuery('') : undefined}
               />
             ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)' }}>
+              <div className="grouped view-enter">
                 {filteredSkills.map(s => {
                   const open = expanded === s.id
                   return (
