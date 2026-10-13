@@ -42,7 +42,7 @@ function EntryRow({
   const cancelRef = useRef<HTMLButtonElement>(null)
 
   return (
-    <div className="flat-panel px-4 py-3 flex items-start gap-3 view-enter">
+    <div className="grouped-row view-enter" style={{ alignItems: 'flex-start' }}>
       <span
         className="chip shrink-0 mt-0.5"
         style={{ color: kindColor[entry.kind], borderColor: kindColor[entry.kind] }}
@@ -252,7 +252,7 @@ function EntriesTab() {
 
       {/* 列表 / 空状态 */}
       {filtered.length > 0 ? (
-        <div className="flex flex-col gap-2" role="list" aria-label="记忆条目">
+        <div className="grouped view-enter" role="list" aria-label="记忆条目">
           {filtered.map(e => (
             <div key={e.id} role="listitem"><EntryRow entry={e} onDelete={deleteEntry} /></div>
           ))}
@@ -482,25 +482,21 @@ export function MemoryView() {
   const [tab, setTab] = useState<'entries' | 'graph'>('entries')
   return (
     <div className="flex-1 overflow-y-auto p-5">
-      <div className="flex items-center gap-2 mb-1">
-        <h2 className="text-[16px] font-bold">记忆</h2>
-        <MockBadge />
+      <div className="page-head">
+        <div className="flex items-center gap-2">
+          <h2 className="t-title">记忆</h2>
+          <MockBadge />
+        </div>
+        <p className="t-sub page-desc">长期记忆条目 · 知识图谱</p>
       </div>
-      <p className="text-[12.5px] mb-4 max-w-[760px]" style={{ color: 'var(--ui-fg-muted)' }}>
-        原生桌面没有独立记忆页（记忆在后端 hermes_state_*，图谱在 Starmap 页）。这里把两者收拢为一个工作台。
-        图谱数据与条目 CRUD 的 RPC 方法待验证（见 DESIGN.md）。
-      </p>
-      <div className="flex gap-1.5 mb-4" role="tablist" aria-label="记忆视图切换">
+      <div className="seg mb-4" role="tablist" aria-label="记忆视图切换">
         {(['entries', 'graph'] as const).map(t => (
           <button
             key={t}
             role="tab"
             aria-selected={tab === t}
             onClick={() => setTab(t)}
-            className="btn"
-            style={tab === t
-              ? { background: 'var(--ui-accent-dim)', borderColor: 'var(--ui-accent)', color: 'var(--ui-accent)', fontWeight: 600 }
-              : {}}
+            className="seg-btn"
           >
             {t === 'entries' ? '记忆条目' : '知识图谱'}
           </button>
