@@ -66,6 +66,12 @@ export function useTheme() {
       setResolved(r)
       document.documentElement.dataset.theme = r
     }
+    // QA 钩子：?notransition=1 禁用主题过渡，避免截图抓到中间帧（见 DESIGN-SYSTEM.md）
+    try {
+      if (new URLSearchParams(window.location.search).get('notransition') === '1') {
+        document.body.style.transition = 'none'
+      }
+    } catch { /* ignore */ }
     apply()
     if (mode === 'system') {
       const mq = window.matchMedia(MEDIA_QUERY)

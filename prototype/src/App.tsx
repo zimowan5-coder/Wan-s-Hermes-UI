@@ -14,7 +14,13 @@ const THEME_CYCLE = ['light', 'dark', 'system'] as const
 
 export default function App() {
   const { mode, setMode } = useTheme()
-  const [view, setView] = useState<ViewId>('chat')
+  // QA 钩子：?view=tasks|skills|memory|messaging|settings 直达某视图（截图/走查用，见 DESIGN-SYSTEM.md）
+  const [view, setView] = useState<ViewId>(() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get('view')
+      return v === 'tasks' || v === 'skills' || v === 'memory' || v === 'messaging' || v === 'settings' ? v : 'chat'
+    } catch { return 'chat' }
+  })
   const { pendingCount } = useGlobalApprovals()
   const [connectionOk, setConnectionOk] = useState(true) // MOCK：模拟连接状态
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -31,8 +37,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const commands = useMemo(() => buildCommands({
-    go: setView,
+  const commands = useMemo(() => buildCommands({    go: setView,
     cycleTheme: () => {
       const i = THEME_CYCLE.indexOf(mode)
       setMode(THEME_CYCLE[(i + 1) % THEME_CYCLE.length])
@@ -47,8 +52,6 @@ export default function App() {
       <Shell
         view={view}
         setView={setView}
-        themeMode={mode}
-        onThemeChange={setMode}
         pendingApprovals={pendingCount}
         connectionOk={connectionOk}
         onToggleConnection={() => setConnectionOk(v => !v)}

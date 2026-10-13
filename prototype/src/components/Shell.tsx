@@ -1,9 +1,8 @@
 import {
   Bell, Brain, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare,
-  Monitor, Moon, Plug2, Search, Settings as SettingsIcon, SquareKanban, Sun, Wifi, WifiOff
+  Plug2, Search, Settings as SettingsIcon, SquareKanban, Wifi, WifiOff
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import type { ThemeMode } from '../theme/theme'
 import { MockBadge } from './MockBadge'
 
 export type ViewId = 'chat' | 'tasks' | 'skills' | 'memory' | 'messaging' | 'settings'
@@ -17,12 +16,6 @@ const NAV: { id: ViewId; label: string; icon: typeof MessageSquare; hint: string
   { id: 'settings', label: '设置', icon: SettingsIcon, hint: 'Profile · 模型 · 连接' }
 ]
 
-const THEMES: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { id: 'light', label: '浅色', icon: Sun },
-  { id: 'dark', label: '深色', icon: Moon },
-  { id: 'system', label: '跟随系统', icon: Monitor }
-]
-
 function useNow() {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -32,17 +25,18 @@ function useNow() {
   return now
 }
 
+/**
+ * v0.4 应用外壳：slim 工具栏 + 安静侧边栏。
+ * 工具栏只保留高频控件（命令 / 连接 / 审批），主题切换收进设置。
+ */
 export function Shell({
   view, setView, children,
-  themeMode, onThemeChange,
   pendingApprovals, connectionOk, onToggleConnection,
   onOpenPalette
 }: {
   view: ViewId
   setView: (v: ViewId) => void
   children: ReactNode
-  themeMode: ThemeMode
-  onThemeChange: (m: ThemeMode) => void
   pendingApprovals: number
   connectionOk: boolean
   onToggleConnection: () => void
@@ -64,83 +58,60 @@ export function Shell({
 
   return (
     <div className="flex flex-col h-full">
-      {/* 顶栏 */}
-      <header className="hairline-b flex items-center gap-3 px-4 shrink-0" style={{ height: 52 }}>
-        <div className="flex items-center gap-2">
+      {/* 工具栏：52px，底部 hairline，轻微材质 */}
+      <header
+        className="hairline-b flex items-center gap-2 px-4 shrink-0"
+        style={{
+          height: 52,
+          background: 'color-mix(in srgb, var(--bg-base) 82%, transparent)',
+          WebkitBackdropFilter: 'blur(20px) saturate(170%)',
+          backdropFilter: 'blur(20px) saturate(170%)',
+          zIndex: 20
+        }}
+      >
+        <div className="flex items-center gap-2.5">
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm"
-            style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-sm)' }}
+            className="w-7 h-7 flex items-center justify-center font-bold text-[13px]"
+            style={{ background: 'var(--accent)', color: '#fff', borderRadius: 8 }}
             aria-hidden
           >H</div>
-          {!collapsed && (
-            <div className="leading-tight">
-              <div className="font-semibold text-[13px]">Hermes <span style={{ color: 'var(--fg-tertiary)' }}>· 新版工作台</span></div>
-            </div>
-          )}
-        </div>
-        <MockBadge />
-
-        {/* 主题切换器 */}
-        <div role="group" aria-label="主题模式" className="flex items-center rounded-lg p-0.5" style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border-subtle)' }}>
-          {THEMES.map(t => {
-            const Icon = t.icon
-            const active = themeMode === t.id
-            return (
-              <button
-                key={t.id}
-                onClick={() => onThemeChange(t.id)}
-                aria-pressed={active}
-                title={t.label}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11.5px]"
-                style={active
-                  ? { background: 'var(--bg-raised)', color: 'var(--fg-primary)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)' }
-                  : { color: 'var(--fg-tertiary)', border: '1px solid transparent' }}
-              >
-                <Icon size={13} />
-                {!collapsed && t.id !== 'system' && <span>{t.label}</span>}
-                {!collapsed && t.id === 'system' && <span>系统</span>}
-              </button>
-            )
-          })}
+          <span className="font-semibold text-[13.5px]" style={{ letterSpacing: '-0.005em' }}>Hermes</span>
+          <MockBadge />
         </div>
 
         <div className="flex-1" />
 
-        {/* 命令面板触发 */}
-        <button className="btn" style={{ padding: '5px 10px', fontSize: 12, color: 'var(--fg-tertiary)' }}
-          onClick={onOpenPalette} title="命令面板（Ctrl/⌘+K）" aria-label="打开命令面板">
+        <button className="btn" style={{ padding: '6px 12px', fontSize: 12.5 }} onClick={onOpenPalette} title="命令面板（Ctrl/⌘+K）" aria-label="打开命令面板">
           <Search size={13} aria-hidden />
-          <span className="hidden md:inline">命令</span>
-          <kbd className="chip font-mono text-[10px]">⌘K</kbd>
+          <span className="hidden md:inline" style={{ color: 'var(--fg-secondary)' }}>命令</span>
+          <kbd className="chip font-mono" style={{ fontSize: 10 }}>⌘K</kbd>
         </button>
 
-        {/* 连接状态（MOCK 可切换，用于演示断连态） */}
         <button
           className="chip"
           onClick={onToggleConnection}
           title="模拟：点击切换连接/断连状态"
-          style={connectionOk ? { color: 'var(--success)', borderColor: 'var(--success)' } : { color: 'var(--danger)', borderColor: 'var(--danger)' }}
+          style={connectionOk
+            ? { color: 'var(--success)', background: 'var(--success-soft)' }
+            : { color: 'var(--danger)', background: 'var(--danger-soft)' }}
         >
-          {connectionOk ? <Wifi size={12} /> : <WifiOff size={12} />}
-          {connectionOk ? '后端未连接 · 纯原型' : '已断连（模拟）'}
+          <span className={`w-1.5 h-1.5 rounded-full ${connectionOk ? '' : 'pulse-dot'}`} style={{ background: 'currentColor' }} aria-hidden />
+          {connectionOk ? '未连接 · 原型' : '已断连（模拟）'}
+          {connectionOk ? <Wifi size={11} aria-hidden /> : <WifiOff size={11} aria-hidden />}
         </button>
-        <span className="chip">Profile：默认</span>
-        <button className="btn" style={{ padding: '5px 10px' }} onClick={() => setView('chat')} title="前往聊天查看待审批">
-          <CheckCircle2 size={14} />
+
+        <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: 12.5 }} onClick={() => setView('chat')} title="前往聊天查看待审批">
+          <CheckCircle2 size={13} aria-hidden />
           {pendingApprovals > 0 ? `${pendingApprovals} 待审批` : '审批'}
         </button>
       </header>
 
       <div className="flex flex-1 min-h-0">
-        {/* 左导航 rail（可折叠） */}
+        {/* 侧边栏：实色安静导航 */}
         <nav
           aria-label="主导航"
-          className="flex flex-col gap-1 p-3 shrink-0 transition-all"
-          style={{
-            width: collapsed ? 64 : 208,
-            borderRight: '1px solid var(--border-subtle)',
-            transitionDuration: 'var(--motion-normal)'
-          }}
+          className="flex flex-col gap-0.5 px-3 py-3 shrink-0"
+          style={{ width: collapsed ? 60 : 216, transition: `width var(--motion-normal) var(--ease-out)` }}
         >
           {NAV.map(item => {
             const Icon = item.icon
@@ -154,16 +125,16 @@ export function Shell({
                 aria-current={active ? 'page' : undefined}
                 style={collapsed ? { justifyContent: 'center', padding: '8px' } : undefined}
               >
-                <Icon size={17} strokeWidth={2.2} aria-hidden />
+                <Icon size={16} strokeWidth={2} aria-hidden />
                 {!collapsed && <span>{item.label}</span>}
               </button>
             )
           })}
           <div className="flex-1" />
           {!collapsed && (
-            <div className="rounded-lg p-3 text-[11px] leading-relaxed" style={{ background: 'var(--mock-soft)', border: '1px dashed var(--mock)', color: 'var(--fg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-              本原型所有数据均为模拟，不代表真实 Hermes 能力。集成点见 DESIGN.md。
-            </div>
+            <p className="t-micro px-3 py-2" style={{ lineHeight: 1.6 }}>
+              原型数据均为模拟，集成点见 DESIGN.md。
+            </p>
           )}
           <button
             className="nav-item"
@@ -173,7 +144,7 @@ export function Shell({
             title={collapsed ? '展开导航栏' : '折叠导航栏'}
             style={collapsed ? { justifyContent: 'center', padding: '8px' } : undefined}
           >
-            {collapsed ? <ChevronRight size={17} aria-hidden /> : <><ChevronLeft size={17} aria-hidden /><span>收起</span></>}
+            {collapsed ? <ChevronRight size={16} aria-hidden /> : <><ChevronLeft size={16} aria-hidden /><span>收起</span></>}
           </button>
         </nav>
 
@@ -181,10 +152,9 @@ export function Shell({
         <main className="flex-1 min-w-0 flex flex-col" id="main-view">{children}</main>
       </div>
 
-      {/* 状态栏（实时时钟） */}
-      <footer className="hairline-t flex items-center gap-4 px-4 text-[11px] shrink-0" style={{ height: 30, color: 'var(--fg-tertiary)' }}>
-        <span>hermes-ui-prototype v0.2.0</span>
-        <span>网关：未连接（MOCK）</span>
+      {/* 状态栏：极简 */}
+      <footer className="flex items-center gap-4 px-5 text-[11px] shrink-0" style={{ height: 28, color: 'var(--fg-tertiary)' }}>
+        <span>hermes-ui-prototype v0.4.0</span>
         <span className="flex-1" />
         <span>北京时间 {timeStr}</span>
       </footer>
