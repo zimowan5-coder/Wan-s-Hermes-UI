@@ -1,3 +1,4 @@
+import { onGroupKeyDown } from '../lib/keyboard'
 import {
   CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleDashed,
   Database, FileDown, HeartPulse, Play, Plus, ScanSearch, Share2, Sparkles,
@@ -5,13 +6,14 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { MockBadge } from '../components/MockBadge'
+import { Modal } from '../components/Modal'
 import { mockCronJobs, mockTasks, type CronJob, type TaskItem } from '../mock/data'
 
 /* ---------------- 定时任务 ---------------- */
 
 const SCHEDULES = ['每天 09:45', '每天 21:45', '每小时', '每周一 09:00', '手动触发']
 
-function CronTab() {
+function CronTab({ query }: { query: string }) {
   const [jobs, setJobs] = useState<CronJob[]>(mockCronJobs)
   const [runningId, setRunningId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -82,8 +84,8 @@ function CronTab() {
       )}
 
       <div className="grouped view-enter" role="list" aria-label="定时任务列表">
-        {jobs.map(j => (
-          <div key={j.id} className="grouped-row" role="listitem">
+        {jobs.filter(j => j.name.toLowerCase().includes(query.toLowerCase())).map(j => (
+          <div key={j.id} className="grouped-row cron-row" role="listitem">
             <button
               onClick={() => toggle(j.id)}
               className="w-9 h-5 rounded-full relative transition-colors shrink-0"
@@ -122,6 +124,7 @@ function CronTab() {
             )}
           </div>
         ))}
+        {jobs.length > 0 && !jobs.some(j => j.name.toLowerCase().includes(query.toLowerCase())) && <p className="p-6 t-sub text-center">没有匹配的任务，请试试其他关键词。</p>}
         {jobs.length === 0 && (
           <div className="surface-overlay p-8 text-center view-enter">
             <CalendarClock size={22} style={{ color: 'var(--fg-tertiary)' }} className="mx-auto mb-2" aria-hidden />
@@ -142,10 +145,13 @@ const COLS: { id: TaskItem['column']; label: string }[] = [
   { id: 'done', label: '已完成' }
 ]
 
-function KanbanTab() {
+function KanbanTab({ query }: { query: string }) {
   const [tasks, setTasks] = useState<TaskItem[]>(mockTasks)
   const [addingCol, setAddingCol] = useState<TaskItem['column'] | null>(null)
   const [draft, setDraft] = useState('')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [removed, setRemoved] = useState<TaskItem | null>(null)
+  const selected = tasks.find(t => t.id === selectedId)
 
   const move = (id: string, dir: -1 | 1) =>
     setTasks(prev => prev.map(t => {
@@ -162,34 +168,35 @@ function KanbanTab() {
     setDraft(''); setAddingCol(null)
   }
 
-  const del = (id: string) => setTasks(prev => prev.filter(t => t.id !== id))
+  const del = (id: string) => { setRemoved(tasks.find(t => t.id === id) ?? null); setTasks(prev => prev.filter(t => t.id !== id)); setSelectedId(null) }
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
         <h3 className="text-[13.5px] font-semibold">任务看板</h3>
-        <span className="text-[11.5px]" style={{ color: 'var(--fg-tertiary)' }}>← → 移动卡片，所有操作均为模拟</span>
+        <span className="text-[11.5px]" style={{ color: 'var(--fg-tertiary)' }}>打开卡片查看详情，或用箭头调整进度（模拟）</span>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="task-board">
         {COLS.map(c => {
-          const items = tasks.filter(t => t.column === c.id)
+          const items = tasks.filter(t => t.column === c.id && t.title.toLowerCase().includes(query.toLowerCase()))
           return (
-            <div key={c.id} className="rounded-xl p-2.5" style={{ background: 'var(--bg-sunken)' }}>
+            <div key={c.id} className="board-column rounded-xl p-2.5" style={{ background: 'var(--bg-sunken)' }}>
               <div className="flex items-center gap-1.5 px-1.5 pb-2 text-[12px] font-semibold" style={{ color: 'var(--fg-secondary)' }}>
                 {c.id === 'done' ? <CheckCircle2 size={13} style={{ color: 'var(--success)' }} aria-hidden /> : <CircleDashed size={13} aria-hidden />}
                 {c.label}
                 <span className="ml-auto chip">{items.length}</span>
               </div>
-              <div className="flex flex-col gap-2" role="list" aria-label={`${c.label}列`}>
+              <div className="flex flex-col gap-2" role="group" aria-label={`${c.label}列`}>
+                {items.length === 0 && <p className="t-caption py-3 px-1">{query ? '没有匹配的任务' : '留一点空间，给下一步。'}</p>}
                 {items.map(t => (
-                  <div key={t.id} className="surface-overlay p-3 group view-enter" role="listitem">
-                    <div className="text-[12.5px] font-medium leading-snug">{t.title}</div>
+                  <div key={t.id} className="board-card p-3 group view-enter" role="article">
+                    <button className="text-[13px] font-medium leading-relaxed text-left w-full" onClick={() => setSelectedId(t.id)}>{t.title}</button>
                     <div className="flex items-center gap-1 mt-2">
                       {t.tag && <span className="chip">{t.tag}</span>}
-                      <span className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="btn" style={{ padding: 3 }} disabled={c.id === 'todo'} onClick={() => move(t.id, -1)} aria-label="左移" title="移到上一列"><ChevronLeft size={13} aria-hidden /></button>
-                        <button className="btn" style={{ padding: 3 }} disabled={c.id === 'done'} onClick={() => move(t.id, 1)} aria-label="右移" title="移到下一列"><ChevronRight size={13} aria-hidden /></button>
-                        <button className="btn" style={{ padding: 3 }} onClick={() => del(t.id)} aria-label="删除卡片" title="删除"><X size={13} aria-hidden /></button>
+                      <span className="board-actions ml-auto flex items-center gap-0.5 transition-opacity">
+                        <button className="icon-btn task-action" style={{ padding: 3 }} disabled={c.id === 'todo'} onClick={() => move(t.id, -1)} aria-label={`将 ${t.title} 移到上一列`} title="移到上一列"><ChevronLeft size={13} aria-hidden /></button>
+                        <button className="icon-btn task-action" style={{ padding: 3 }} disabled={c.id === 'done'} onClick={() => move(t.id, 1)} aria-label={`将 ${t.title} 移到下一列`} title="移到下一列"><ChevronRight size={13} aria-hidden /></button>
+                        <button className="icon-btn task-action" style={{ padding: 3 }} onClick={() => del(t.id)} aria-label={`删除卡片 ${t.title}`} title="删除"><X size={13} aria-hidden /></button>
                       </span>
                     </div>
                   </div>
@@ -215,6 +222,12 @@ function KanbanTab() {
           )
         })}
       </div>
+      {removed && <div className="task-toast" role="status">已删除「{removed.title}」（模拟）<button className="btn btn-plain" onClick={() => { setTasks(p => [...p, removed]); setRemoved(null) }}>撤销</button></div>}
+      <Modal open={!!selected} onClose={() => setSelectedId(null)} label="任务详情" className="task-detail">
+        {selected && <><div className="flex items-center justify-between"><span className="eyebrow">TASK DETAILS · MOCK</span><button className="icon-btn" aria-label="关闭任务详情" onClick={() => setSelectedId(null)}><X size={17}/></button></div>
+        <h3>{selected.title}</h3><label className="t-caption">进度<select className="input mt-2 mb-4" value={selected.column} onChange={e => setTasks(p => p.map(t => t.id === selected.id ? { ...t, column: e.target.value as TaskItem['column'] } : t))}>{COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
+        <p>当前仅调整本地看板进度。不会启动 Agent，也不会执行真实任务。</p><div className="flex items-center justify-end mt-6"><button className="btn btn-primary" onClick={() => setSelectedId(null)}>完成</button></div></>}
+      </Modal>
     </div>
   )
 }
@@ -234,6 +247,7 @@ const OPS: OpDef[] = [
 
 function OpsTab() {
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [lastId, setLastId] = useState<string | null>(null)
   const [lines, setLines] = useState<string[]>([])
   const timers = useRef<number[]>([])
   useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
@@ -241,6 +255,7 @@ function OpsTab() {
   const run = (op: OpDef) => {
     if (activeId) return
     setActiveId(op.id)
+    setLastId(op.id)
     setLines([])
     op.lines.forEach((ln, i) => {
       timers.current.push(window.setTimeout(() => {
@@ -275,11 +290,11 @@ function OpsTab() {
                 </button>
               </div>
               <p className="text-[12px] mt-1" style={{ color: 'var(--fg-tertiary)' }}>{op.desc}</p>
-              {running && (
+              {lastId === op.id && (
                 <div className="mt-2.5 rounded-lg p-2.5 font-mono text-[11.5px] leading-relaxed view-enter"
                   style={{ background: 'var(--bg-sunken)', color: 'var(--fg-secondary)' }} role="log" aria-label={`${op.name} 运行日志`}>
                   {lines.map((ln, i) => <div key={i}>{ln}</div>)}
-                  {lines.length < op.lines.length && <span className="animate-pulse">▊</span>}
+                  {running && lines.length < op.lines.length && <span className="animate-pulse">▊</span>}
                 </div>
               )}
             </div>
@@ -300,31 +315,31 @@ const TABS = [
 
 export function TasksView() {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('cron')
+  const [query, setQuery] = useState('')
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[880px] mx-auto p-5">
-        <div className="page-head">
+      <div className="content-page">
+        <div className="page-head"><span className="eyebrow mb-3">YOUR WORK, IN A GOOD RHYTHM</span>
           <div className="flex items-center gap-2">
             <h2 className="t-title">任务</h2>
             <MockBadge />
           </div>
-          <p className="t-sub page-desc">定时任务 · 看板 · 运维</p>
+          <p className="t-sub page-desc">定时执行，或一步一步完成。</p>
         </div>
-        <div className="seg mb-5" role="tablist" aria-label="任务二级导航">
+        <div className="seg mb-5" role="tablist" onKeyDown={onGroupKeyDown} aria-label="任务二级导航">
           {TABS.map(t => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id}
+            <button key={t.id} role="tab" aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
               className="seg-btn"
               onClick={() => setTab(t.id)}>
               {t.label}
             </button>
           ))}
         </div>
-        <div key={tab} className="view-enter">
-          {tab === 'cron' && <CronTab />}
-          {tab === 'kanban' && <KanbanTab />}
-          {tab === 'ops' && <OpsTab />}
-        </div>
+        {tab !== 'ops' && <label className="task-search mb-6"><ScanSearch size={15}/><input aria-label="搜索任务" placeholder="搜索任务…" value={query} onChange={e => setQuery(e.target.value)}/></label>}
+        <div className="view-enter" hidden={tab !== 'cron'}><CronTab query={query}/></div>
+        <div className="view-enter" hidden={tab !== 'kanban'}><KanbanTab query={query}/></div>
+        <div className="view-enter" hidden={tab !== 'ops'}><OpsTab/></div>
       </div>
     </div>
   )

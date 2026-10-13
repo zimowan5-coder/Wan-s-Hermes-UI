@@ -1,3 +1,4 @@
+import { onGroupKeyDown } from '../lib/keyboard'
 import { useEffect, useRef, useState } from 'react'
 import {
   BadgeCheck, Cpu, Download, Gauge, HardDrive, Info,
@@ -35,7 +36,7 @@ const STORAGE_USED_GB = 2.4
 const STORAGE_TOTAL_GB = 10
 
 const ZOOM_KEY = 'hermes-ui-zoom'
-const APP_VERSION = '0.4.0-prototype'
+const APP_VERSION = '0.5.0-prototype'
 
 /* ============ 小组件 ============ */
 
@@ -89,7 +90,7 @@ function Divider() {
 function UsageBar({ pct, color = 'var(--accent)' }: { pct: number; color?: string }) {
   return (
     <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-sunken)' }} role="progressbar"
-      aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+      aria-label="用量比例" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
       <div className="h-full rounded-full transition-all duration-200" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
     </div>
   )
@@ -112,20 +113,20 @@ export function SettingsView() {
   const [checking, setChecking] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const timers = useRef<number[]>([])
+  const toastTimer = useRef<number | null>(null)
 
-  useEffect(() => () => { timers.current.forEach(clearTimeout) }, [])
+  useEffect(() => () => { timers.current.forEach(clearTimeout); if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
-  // 界面缩放：实时调整根字体大小并持久化
+  // 界面缩放：使用 CSS zoom 缩放全部控件与文本，并补偿视口高度
   useEffect(() => {
-    document.documentElement.style.fontSize = `${(16 * zoom) / 100}px`
+    document.documentElement.style.setProperty('--ui-scale', String(zoom / 100))
     try { window.localStorage.setItem(ZOOM_KEY, String(zoom)) } catch { /* ignore */ }
   }, [zoom])
 
   const notify = (text: string) => {
-    timers.current.forEach(clearTimeout)
-    timers.current = []
+    if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ id: Date.now(), text })
-    timers.current.push(window.setTimeout(() => setToast(null), 2600))
+    toastTimer.current = window.setTimeout(() => setToast(null), 2600)
   }
 
   const switchProfile = (p: Profile) => {
@@ -227,19 +228,19 @@ export function SettingsView() {
 
       {/* 右侧内容 */}
       <div className="flex-1 min-w-0 overflow-y-auto">
-        <div className="max-w-[680px] mx-auto px-5 py-5">
+        <div className="settings-content max-w-[720px] mx-auto px-5 py-5">
           {/* 小屏顶部 tabs */}
           <div className="md:hidden mb-4">
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-[15px] font-bold" style={{ color: 'var(--fg-primary)' }}>设置</h2>
               <MockBadge label="MOCK" />
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="设置分组">
+            <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" onKeyDown={onGroupKeyDown} aria-label="设置分组">
               {SECTIONS.map(s => {
                 const active = section === s.id
                 const Icon = s.icon
                 return (
-                  <button key={s.id} role="tab" aria-selected={active} onClick={() => setSection(s.id)}
+                  <button key={s.id} role="tab" aria-selected={active} tabIndex={active ? 0 : -1} onClick={() => setSection(s.id)}
                     className="btn shrink-0" style={active ? { background: 'var(--accent-soft)', borderColor: 'var(--accent-border)', color: 'var(--accent)' } : {}}>
                     <Icon size={13} aria-hidden />{s.label}
                   </button>
@@ -251,12 +252,12 @@ export function SettingsView() {
           <div key={section} className="view-enter">
             {section === 'profile' && (
               <section aria-label="个人资料">
-                <GroupTitle>PROFILE · 切换后全局生效</GroupTitle>
-                <div role="radiogroup" aria-label="选择 Profile" className="flex flex-col gap-2">
+                <GroupTitle>PROFILE · 本页模拟选择</GroupTitle>
+                <div role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="选择 Profile" className="flex flex-col gap-2">
                   {PROFILES.map(p => {
                     const active = p.id === activeProfile
                     return (
-                      <button key={p.id} role="radio" aria-checked={active} onClick={() => switchProfile(p)}
+                      <button key={p.id} role="radio" aria-checked={active} tabIndex={active ? 0 : -1} onClick={() => switchProfile(p)}
                         className="text-left rounded-xl px-4 py-3.5 transition-all duration-150"
                         style={active
                           ? { background: 'var(--bg-raised)', border: '1px solid var(--accent-border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
@@ -289,13 +290,13 @@ export function SettingsView() {
               <section aria-label="外观">
                 <GroupTitle>主题</GroupTitle>
                 <Card className="p-4">
-                  <div role="radiogroup" aria-label="主题模式" className="grid grid-cols-3 gap-1 p-1 rounded-xl"
+                  <div role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="主题模式" className="grid grid-cols-3 gap-1 p-1 rounded-xl"
                     style={{ background: 'var(--bg-sunken)' }}>
                     {THEME_OPTIONS.map(o => {
                       const active = mode === o.id
                       const Icon = o.icon
                       return (
-                        <button key={o.id} role="radio" aria-checked={active} onClick={() => setMode(o.id)}
+                        <button key={o.id} role="radio" aria-checked={active} tabIndex={active ? 0 : -1} onClick={() => setMode(o.id)}
                           className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12.5px] transition-all duration-150"
                           style={active
                             ? { background: 'var(--bg-raised)', color: 'var(--fg-primary)', fontWeight: 600, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }

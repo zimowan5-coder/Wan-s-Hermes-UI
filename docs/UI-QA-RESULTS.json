@@ -1,0 +1,619 @@
+{
+  "date": "2026-10-13T04:21:00.213Z",
+  "browser": "154.0.8037.57",
+  "baseURL": "http://127.0.0.1:4174",
+  "matrix": [
+    {
+      "view": "chat",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "chat",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "chat",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "chat",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
+      "view": "chat",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
+      "view": "chat",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    }
+  ],
+  "secondary": [
+    {
+      "view": "tasks",
+      "theme": "light",
+      "tab": "看板",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "light",
+      "tab": "运维",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "tab": "连接器",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "tab": "工具集",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "tab": "Agents",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "light",
+      "tab": "知识图谱",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "light",
+      "tab": "Webhooks",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "外观",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "用量",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "系统",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "关于",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "dark",
+      "tab": "看板",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "tasks",
+      "theme": "dark",
+      "tab": "运维",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "tab": "连接器",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "tab": "工具集",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "tab": "Agents",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "memory",
+      "theme": "dark",
+      "tab": "知识图谱",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "messaging",
+      "theme": "dark",
+      "tab": "Webhooks",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "外观",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "用量",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "系统",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "关于",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "state": "session-dialog",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "state": "command-dialog",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    }
+  ],
+  "interactions": [
+    {
+      "name": "Session drafts; IME Enter does not send",
+      "passed": true
+    },
+    {
+      "name": "Async sends stay in their original session",
+      "passed": true
+    },
+    {
+      "name": "Draft survives workbench navigation",
+      "passed": true
+    },
+    {
+      "name": "Slash keyboard insertion",
+      "passed": true
+    },
+    {
+      "name": "High-risk approval uses cancel default and Escape",
+      "passed": true
+    },
+    {
+      "name": "Tool retry reaches settled state",
+      "passed": true
+    },
+    {
+      "name": "Disconnect disables send while retaining draft",
+      "passed": true
+    },
+    {
+      "name": "Command dialog traps/restores focus and closes on backdrop",
+      "passed": true
+    },
+    {
+      "name": "New-chat command opens empty demo; session search empty state",
+      "passed": true
+    },
+    {
+      "name": "Scheduled task create/run/search; tabs preserve edits",
+      "passed": true
+    },
+    {
+      "name": "Board keyboard tab/detail/progress/delete/undo",
+      "passed": true
+    },
+    {
+      "name": "Mobile navigation and session drawers",
+      "passed": true
+    },
+    {
+      "name": "System theme and blocked-storage synchronization",
+      "passed": true
+    },
+    {
+      "name": "Completed maintenance log remains available",
+      "passed": true
+    },
+    {
+      "name": "Settings toast does not cancel in-flight update check",
+      "passed": true
+    },
+    {
+      "name": "120% scale fits small viewport and applies to pixel controls",
+      "passed": true
+    },
+    {
+      "name": "Compact desktop rail opens full navigation",
+      "passed": true
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "screenshots": [
+    "chat-light.png",
+    "empty-light.png",
+    "tasks-light.png",
+    "board-light.png",
+    "chat-dark.png",
+    "empty-dark.png",
+    "tasks-dark.png",
+    "board-dark.png",
+    "chat-mobile.png",
+    "command-dark.png"
+  ],
+  "productionAssets": [
+    "/assets/index-DAjknq4N.js",
+    "/assets/index-Dp_ZTsOp.css"
+  ],
+  "passed": true,
+  "summary": {
+    "matrix": 36,
+    "secondary": 24,
+    "interactionChecks": 17,
+    "layoutOrAccessibilityFailures": 0,
+    "browserErrors": 0
+  },
+  "sourceCommit": "93af6b5d72b8f547879269e5b87e26fa5e9e2657",
+  "baselineCommit": "cce1f06e0f30ce5643d45c546a56689c72fe81dc",
+  "screenshotsSHA256": {
+    "board-dark.png": "302c550c0c7c03e8a35dbd48a7004c8ca78922954f089198037d72a4215a4607",
+    "board-light.png": "33717387c7e9b3761863541ec5c3d482c11f9b0b26813ab3bebe73bf0f504975",
+    "chat-dark.png": "10fcab6dee0d7bdffcca8207bb2bda9e00189f75c4deb3caf629ddf185b41cbd",
+    "chat-light.png": "ac25bebbaeed5001152c77d24bd5e9759c8f8133e55feac43b1975937e3f4671",
+    "chat-mobile.png": "1a1cbe89195ee1ca4f8041b1c1398ab9f1e38b2aa10c9bf565c20a9863b2f110",
+    "command-dark.png": "0f253166117fecf88299b5103a2f958d54b78293b3aa2a9e2cfb4de85229ebe7",
+    "empty-dark.png": "a9a47beaad26dd0bd0716149dcdefa274b81b1827ec83c40f63d1639788d6108",
+    "empty-light.png": "3479a4efe1e5036ad0616dd2e3db2dd6819df2b6cc11f6cb5a919a97c8a972a3",
+    "tasks-dark.png": "90a38ae513434d7ca98b253797aa55f300e777228e8ab7c687163610f33c5a90",
+    "tasks-light.png": "4b37265e578e97f53edefba07c748445d4dc9141a6143f7f3a20424d0b53f12b"
+  }
+}

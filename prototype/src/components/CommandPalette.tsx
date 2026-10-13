@@ -3,6 +3,7 @@ import {
   Search, Settings, Sparkles, Sun, Wifi, WifiOff
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Modal } from './Modal'
 
 export interface PaletteCommand {
   id: string
@@ -42,7 +43,7 @@ export function CommandPalette({
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const [recents, setRecents] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') } catch { return [] }
+    try { const v: unknown = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]'); return Array.isArray(v) ? v.filter((id): id is string => typeof id === 'string') : [] } catch { return [] }
   })
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -92,19 +93,13 @@ export function CommandPalette({
   const run = (cmd: PaletteCommand) => {
     const next = [cmd.id, ...recents.filter(id => id !== cmd.id)].slice(0, 8)
     setRecents(next)
-    localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)) } catch { /* Keep commands usable when storage is blocked. */ }
     onClose()
     cmd.run()
   }
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex justify-center pt-[18vh]" role="presentation"
-      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(2px)' }} />
-      <div role="dialog" aria-modal="true" aria-label="命令面板"
-        className="glass-strong relative w-[560px] max-w-[92vw] h-fit overflow-hidden view-enter">
+    <Modal open={open} onClose={onClose} label="命令面板" className="command-modal glass-strong">
         <div className="flex items-center gap-2.5 px-4 hairline-b">
           <Search size={16} style={{ color: 'var(--fg-tertiary)' }} aria-hidden />
           <input
@@ -115,12 +110,12 @@ export function CommandPalette({
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(rows.length - 1, a + 1)) }
+              if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.max(0, Math.min(rows.length - 1, a + 1))) }
               if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(0, a - 1)) }
               if (e.key === 'Enter' && rows[active]) { e.preventDefault(); run(rows[active]) }
               if (e.key === 'Escape') { e.preventDefault(); onClose() }
             }}
-            role="combobox" aria-expanded aria-controls="palette-list" aria-autocomplete="list"
+            role="combobox" aria-label="搜索命令" aria-expanded aria-controls="palette-list" aria-autocomplete="list" aria-activedescendant={rows[active] ? `command-${rows[active].id}` : undefined}
           />
           {query && (
             <button className="btn" style={{ padding: '3px 8px', fontSize: 11 }} onClick={() => setQuery('')}>清除</button>
@@ -151,7 +146,7 @@ export function CommandPalette({
                   </div>
                 )}
                 <button
-                  role="option" aria-selected={i === active} data-active={i === active}
+                  id={`command-${cmd.id}`} tabIndex={-1} role="option" aria-selected={i === active} data-active={i === active}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors"
                   style={i === active ? { background: 'var(--accent-soft)' } : {}}
                   onMouseEnter={() => setActive(i)}
@@ -172,8 +167,7 @@ export function CommandPalette({
           <span className="flex items-center gap-1"><kbd className="chip font-mono">esc</kbd> 关闭</span>
           <span className="ml-auto">MOCK 原型命令面板</span>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

@@ -1,3 +1,4 @@
+import { onGroupKeyDown } from '../lib/keyboard'
 import {
   Bot, ChevronDown, Link2, Link2Off, Loader2, PlugZap, Plus,
   Puzzle, Search, SearchX, Terminal, Wrench, X
@@ -199,7 +200,7 @@ export function SkillsView() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="reading-col px-5 pt-5 pb-8">
+      <div className="content-page">
         {/* 标题区 */}
         <div className="page-head">
           <div className="flex items-center gap-2">
@@ -214,12 +215,12 @@ export function SkillsView() {
         </div>
 
         {/* 二级 tab */}
-        <div role="tablist" aria-label="技能工作台二级导航" className="seg mb-5">
+        <div role="tablist" onKeyDown={onGroupKeyDown} aria-label="技能工作台二级导航" className="seg mb-5">
           {TABS.map(t => (
             <button
               key={t.id}
               role="tab"
-              aria-selected={tab === t.id}
+              aria-selected={tab === t.id} tabIndex={tab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)}
               className="seg-btn"
             >

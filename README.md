@@ -5,11 +5,19 @@
 
 ## 当前阶段
 
-**第一阶段：研究与 UI 原型**（分支 `feature/ui-prototype`，Draft PR 待审查）
+**v0.5 UI / UX 精修**：独立分支 `feature/ui-craft-refinement`，基于已有 `feature/ui-prototype`，保留六工作台和数据适配层。
 
-- `DESIGN.md` — 官方源码研究结论、原生功能清单（含源码依据）、13→6 信息架构改造、真实集成点、未确认清单
-- `RUN.md` — 原型运行指南与可交互清单
-- `prototype/` — 可交互 UI 原型（Vite + React 19 + TS + Tailwind v4），**全部为模拟数据**
+- [精修说明](docs/UI-REFINEMENT.md) · [变更记录](CHANGELOG.md) · [运行指南](RUN.md)
+- [浏览器验证报告](docs/UI-QA-RESULTS.json) · [真实运行截图](docs/screenshots/README.md)
+- 重点：安静的视觉层级、双主题、响应式抽屉、聊天连续性、任务详情与可撤销操作。
+- 所有 Agent 操作仍为模拟；不连接本地 Hermes，不扩展核心后端。
+
+### 实际界面
+
+| 浅色 | 深色 |
+|---|---|
+| ![浅色空会话](docs/screenshots/v05/empty-light.png) | ![深色空会话](docs/screenshots/v05/empty-dark.png) |
+| ![浅色任务看板](docs/screenshots/v05/board-light.png) | ![深色任务看板](docs/screenshots/v05/board-dark.png) |
 
 ## 原型速览
 

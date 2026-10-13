@@ -1,3 +1,4 @@
+import { onGroupKeyDown } from '../lib/keyboard'
 /**
  * 消息工作台 —— MOCK 原型。
  * 本文件所有交互均为模拟，不代表真实 Hermes 后端能力。
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MockBadge } from '../components/MockBadge'
+import { Modal } from '../components/Modal'
 
 /* ---------------- 局部 MOCK 数据（不碰 mock/data.ts） ---------------- */
 
@@ -178,8 +180,6 @@ export function MessagingView() {
     if (!qrOpen) return
     setQrCount(3)
     cancelRef.current?.focus()
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setQrOpen(false) }
-    window.addEventListener('keydown', onKey)
     const iv = window.setInterval(() => {
       setQrCount(c => {
         if (c <= 1) {
@@ -191,7 +191,7 @@ export function MessagingView() {
         return c - 1
       })
     }, 1000)
-    return () => { window.removeEventListener('keydown', onKey); window.clearInterval(iv) }
+    return () => { window.clearInterval(iv) }
   }, [qrOpen])
 
   /* Telegram 验证码两步 */
@@ -270,8 +270,8 @@ export function MessagingView() {
     <Webhook size={16} aria-hidden />
 
   return (
-    <div className="flex-1 overflow-y-auto p-5">
-      <div className="page-head">
+    <div className="flex-1 overflow-y-auto">
+      <div className="content-page"><div className="page-head">
         <div className="flex items-center gap-2">
           <h2 className="t-title">消息</h2>
           <MockBadge />
@@ -280,10 +280,10 @@ export function MessagingView() {
       </div>
 
       {/* 二级 tab */}
-      <div role="tablist" aria-label="消息设置" className="seg mb-4">
+      <div role="tablist" onKeyDown={onGroupKeyDown} aria-label="消息设置" className="seg mb-4">
         {(['channels', 'webhooks'] as const).map(t => (
           <button
-            key={t} role="tab" aria-selected={tab === t}
+            key={t} role="tab" aria-selected={tab === t} tabIndex={tab === t ? 0 : -1}
             onClick={() => setTab(t)}
             className="seg-btn"
           >
@@ -389,7 +389,7 @@ export function MessagingView() {
                     <div className="flex items-center gap-2">
                       <label htmlFor="dc-token" className="sr-only">Discord Bot Token</label>
                       <input
-                        id="dc-token" type="password" className="input flex-1" placeholder="粘贴 Discord Bot Token（模拟）"
+                        id="dc-token" type="password" className="input flex-1" placeholder="输入任意测试文本，请勿粘贴真实 Token"
                         value={dcToken} onChange={e => { setDcToken(e.target.value); setDcError('') }}
                         onKeyDown={e => { if (e.key === 'Enter') dcConnect() }}
                       />
@@ -536,25 +536,14 @@ export function MessagingView() {
         </div>
       )}
 
+      </div>
       {/* 微信扫码 modal */}
-      {qrOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
-          onClick={() => setQrOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="surface-overlay p-6 flex flex-col items-center gap-3 view-enter"
-            role="dialog" aria-modal="true" aria-labelledby="qr-title"
-            onClick={e => e.stopPropagation()}
-            style={{ maxWidth: 340 }}
-          >
-            <h3 id="qr-title" className="text-[15px] font-bold" style={{ color: 'var(--fg-primary)' }}>微信扫码登录</h3>
+      <Modal open={qrOpen} onClose={() => setQrOpen(false)} label="微信扫码登录（模拟）" className="qr-dialog">
+        <div className="p-6 flex flex-col items-center gap-3">            <h3 id="qr-title" className="text-[15px] font-bold" style={{ color: 'var(--fg-primary)' }}>微信扫码登录</h3>
             <FakeQr seed={20261012} />
             <p className="text-[12.5px] text-center" style={{ color: 'var(--fg-secondary)' }}>
-              请使用微信扫码（模拟占位图）<br />
-              <span style={{ color: 'var(--fg-tertiary)' }}>扫码后 <strong style={{ color: 'var(--warning)' }}>{qrCount}</strong> 秒自动连接并关闭</span>
+              演示二维码，请勿使用真实账户扫码<br />
+              <span style={{ color: 'var(--fg-tertiary)' }}>倒计时结束后模拟连接 · <strong style={{ color: 'var(--warning)' }}>{qrCount}</strong> 秒自动连接并关闭</span>
             </p>
             <div className="w-full rounded-full" style={{ height: 4, background: 'var(--bg-sunken)' }} aria-hidden>
               <div className="rounded-full" style={{
@@ -566,9 +555,8 @@ export function MessagingView() {
             <button ref={cancelRef} className="btn w-full" style={{ padding: '8px', fontSize: 13 }} onClick={() => setQrOpen(false)}>
               <X size={14} aria-hidden />取消（Esc）
             </button>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

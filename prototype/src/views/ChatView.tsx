@@ -1,16 +1,19 @@
 import {
-  CheckCircle2, Check, ChevronDown, ChevronRight, Copy, History, Loader2,
+  ArrowUp, CheckCircle2, Check, ChevronDown, ChevronRight, Copy, History, Loader2,
   MessageSquarePlus, PanelLeftClose, PanelLeftOpen, RotateCcw,
-  SendHorizonal, ShieldAlert, ShieldCheck, TerminalSquare, WifiOff, Wrench, XCircle
+  Search, Sparkles, ShieldAlert, ShieldCheck, TerminalSquare, WifiOff, Wrench, XCircle
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { MockBadge } from '../components/MockBadge'
+import { HermesMark } from '../components/Shell'
+import { Modal } from '../components/Modal'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import type { AgentState } from '../data/types'
 import { useChatSession, useSessionList } from '../hooks/useChatSession'
 import { pendingApprovalsForSession } from '../lib/session-state'
 import {
   type Approval, type ChatMessage, type ToolRun
-} from '../mock/data'
+} from '../data/types'
 
 const STATE_META: Record<AgentState, { label: string; color: string; spin?: boolean }> = {
   idle: { label: '就绪', color: 'var(--success)' },
@@ -27,9 +30,17 @@ const riskLabel = { low: '低风险', medium: '中风险', high: '高风险' } a
  * 焦点安全：进入二次确认时焦点落在「取消」（安全默认），绝不自动落在危险按钮上；
  * 确认危险操作必须是明确的用户行为（Tab 到确认按钮后按 Enter/Space，或点击）。
  * Esc 取消二次确认。状态变化经 aria-live 播报。 */
-function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok: boolean) => void }) {
+function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok: boolean) => Promise<boolean> }) {
   const [confirming, setConfirming] = useState<'approve' | 'deny' | null>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const [deciding, setDeciding] = useState(false)
+  const [decisionFailed, setDecisionFailed] = useState(false)
+  const decideOnce = async (ok: boolean) => {
+    if (deciding) return
+    setDeciding(true); setDecisionFailed(false)
+    try { const applied = await onDecide(a.id, ok); if (!applied) setDecisionFailed(true) }
+    finally { setDeciding(false) }
+  }
 
   useEffect(() => { setConfirming(null) }, [a.status, a.id])
 
@@ -40,7 +51,7 @@ function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok:
 
   if (a.status !== 'pending') {
     return (
-      <div className="surface p-3 text-[12px] msg-stream" role="status">
+      <div className="approval-receipt text-[12px] msg-stream" role="status">
         {a.status === 'approved'
           ? <span style={{ color: 'var(--success)' }}><CheckCircle2 size={13} className="inline mr-1" aria-hidden />已批准</span>
           : <span style={{ color: 'var(--danger)' }}><XCircle size={13} className="inline mr-1" aria-hidden />已拒绝</span>}
@@ -51,16 +62,16 @@ function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok:
 
   const approve = () => {
     if (a.risk === 'high' && confirming !== 'approve') { setConfirming('approve'); return }
-    onDecide(a.id, true)
+    void decideOnce(true)
   }
   const deny = () => {
     if (a.risk === 'high' && confirming !== 'deny') { setConfirming('deny'); return }
-    onDecide(a.id, false)
+    void decideOnce(false)
   }
   const cancelConfirm = () => setConfirming(null)
 
   return (
-    <section aria-label={`待审批：${a.title}`} className="surface-overlay p-4 approval-card">
+    <section aria-label={`待审批：${a.title}`} className="approval-card p-4">
       <div className="flex items-center gap-2 mb-1.5">
         {a.risk === 'high'
           ? <ShieldAlert size={15} style={{ color: riskColor[a.risk] }} aria-hidden />
@@ -80,26 +91,28 @@ function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok:
           onKeyDown={e => { if (e.key === 'Escape') cancelConfirm() }}
         >
           <span id={`confirm-desc-${a.id}`} className="text-[12px] font-medium w-full" style={{ color: 'var(--danger)' }} role="status">
-            {confirming === 'approve' ? '请再次确认批准：此操作影响本机网络出口。' : '请再次确认拒绝该请求。'}
+            {confirming === 'approve' ? `请再次确认批准：${a.detail}` : '请再次确认拒绝该请求。'}
           </span>
           <button ref={cancelRef} className="btn" onClick={cancelConfirm}>取消（Esc）</button>
           <button
             className={`btn ${confirming === 'approve' ? 'btn-primary' : 'btn-danger'}`}
-            onClick={() => onDecide(a.id, confirming === 'approve')}
+            disabled={deciding} onClick={() => void decideOnce(confirming === 'approve')}
           >
             确认{confirming === 'approve' ? '批准' : '拒绝'}
           </button>
-          <span className="text-[11px]" style={{ color: 'var(--fg-tertiary)' }}>焦点默认在「取消」——危险操作需要你主动移动焦点后确认</span>
+          <span className="text-[11px]" style={{ color: 'var(--fg-tertiary)' }}>仅影响演示数据，不会执行真实操作</span>
         </div>
       ) : (
         <div className="flex gap-2 items-center">
-          <button className="btn btn-primary" onClick={approve}>批准</button>
-          <button className="btn btn-danger" onClick={deny}>拒绝</button>
+          <button className="btn btn-primary" disabled={deciding} onClick={approve}>批准</button>
+          <button className="btn btn-danger" disabled={deciding} onClick={deny}>拒绝</button>
           <span className="text-[11px]" style={{ color: 'var(--fg-tertiary)' }}>
             {a.risk === 'high' ? '高风险操作需要两步确认' : '点击即生效，可在下方看到结果'}
           </span>
         </div>
       )}
+      {deciding && <p className="t-caption mt-2" role="status">正在保存决定…</p>}
+      {decisionFailed && <p className="text-[12px] mt-2" style={{ color: 'var(--danger)' }} role="alert">决定未保存，请再试一次。</p>}
     </section>
   )
 }
@@ -107,6 +120,7 @@ function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok:
 /* ---------- 消息行 ---------- */
 function MessageRow({ m }: { m: ChatMessage }) {
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const copyTimer = useRef<number | null>(null)
   useEffect(() => () => { if (copyTimer.current) window.clearTimeout(copyTimer.current) }, [])
 
@@ -114,8 +128,10 @@ function MessageRow({ m }: { m: ChatMessage }) {
     try {
       await navigator.clipboard.writeText(m.text)
     } catch {
-      /* 剪贴板不可用时静默忽略（file:// 等） */
+      setCopyError(true)
+      return
     }
+    setCopyError(false)
     setCopied(true)
     if (copyTimer.current) window.clearTimeout(copyTimer.current)
     copyTimer.current = window.setTimeout(() => setCopied(false), 1600)
@@ -151,11 +167,12 @@ function MessageRow({ m }: { m: ChatMessage }) {
   if (!mine) {
     /* 助手消息：纯文本排版，无气泡（内容优先） */
     return (
-      <div className="msg-stream py-2 group">
+      <div className="msg-stream assistant-message group">
+        <div className="message-author"><HermesMark /><span>Hermes</span><span className="author-caption">与你一起思考</span></div>
         <div className="text-[14px] leading-[1.65] whitespace-pre-wrap" style={{ color: 'var(--fg-primary)' }}>
           {m.text}
         </div>
-        <div className="text-[10px] mt-1 opacity-60 flex items-center gap-2">
+        <div className="message-meta flex items-center gap-2">
           <span style={{ color: 'var(--fg-tertiary)' }}>{m.time}</span>
           <button
             className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center gap-1 rounded px-1 py-0.5"
@@ -165,7 +182,8 @@ function MessageRow({ m }: { m: ChatMessage }) {
             title="复制消息"
           >
             {copied ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
-            {copied && <span className="text-[10px]">已复制</span>}
+            {copied && <span>已复制</span>}
+            {copyError && <span role="alert">复制失败，请选择文本复制</span>}
           </button>
         </div>
       </div>
@@ -174,8 +192,8 @@ function MessageRow({ m }: { m: ChatMessage }) {
   return (
     <div className="msg-stream flex justify-end py-1.5">
       <div
-        className="max-w-[80%] px-4 py-2.5 text-[13.5px] leading-relaxed whitespace-pre-wrap"
-        style={{ background: 'var(--accent)', color: 'var(--accent-fg)', borderRadius: '18px 18px 6px 18px' }}
+        className="user-message max-w-[85%] px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap"
+        style={{ background: 'var(--message-user)', color: 'var(--fg-primary)', borderRadius: '18px 18px 5px 18px' }}
       >
         {m.text}
         <div className="text-[10px] mt-1 opacity-70">{m.time}</div>
@@ -190,7 +208,7 @@ function ToolTimeline({ runs, onRetry }: { runs: ToolRun[]; onRetry: (runId: str
   const failed = runs.filter(r => r.status === 'error').length
   const running = runs.filter(r => r.status === 'running').length
   return (
-    <div className="hairline-t">
+    <div className="tool-timeline">
       <button
         className="w-full flex items-center gap-2 px-5 py-2 text-[12px]"
         style={{ color: 'var(--fg-secondary)' }}
@@ -200,13 +218,13 @@ function ToolTimeline({ runs, onRetry }: { runs: ToolRun[]; onRetry: (runId: str
         {open ? <ChevronDown size={14} aria-hidden /> : <ChevronRight size={14} aria-hidden />}
         <TerminalSquare size={13} aria-hidden />
         <span>
-          工具执行时间线（MOCK）· {runs.length} 次
+          执行记录 · {runs.length} 次
           {running > 0 && <span style={{ color: 'var(--accent)' }}> · {running} 执行中</span>}
           {failed > 0 && <span style={{ color: 'var(--danger)' }}> · {failed} 失败</span>}
         </span>
       </button>
       {open && (
-        <div className="px-5 pb-3 flex flex-col gap-1.5 view-enter">
+        <div className="timeline-runs px-5 pb-3 flex flex-col gap-1.5 view-enter">
           {runs.length === 0 && <p className="text-[12px]" style={{ color: 'var(--fg-tertiary)' }}>本会话暂无工具执行记录。</p>}
           {runs.map(r => (
             <div key={r.id} className="flex items-center gap-2.5 text-[12px] px-3 py-2 rounded-lg" style={{ background: 'var(--bg-sunken)', borderRadius: 'var(--radius-sm)' }} role="status">
@@ -233,14 +251,11 @@ function ToolTimeline({ runs, onRetry }: { runs: ToolRun[]; onRetry: (runId: str
 function EmptyState({ onSuggest }: { onSuggest: (t: string) => void }) {
   const suggestions = ['总结今天的审计进展', '帮我规划明天的 AI 早报', '看看有哪些技能可用']
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6 py-16 view-enter">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-lg)' }}>
-        <MessageSquarePlus size={24} style={{ color: 'var(--accent)' }} aria-hidden />
-      </div>
-      <h3 className="text-[15px] font-semibold mb-1">开始新的对话</h3>
-      <p className="text-[12.5px] mb-5 max-w-[380px]" style={{ color: 'var(--fg-secondary)' }}>
-        这是一个空会话（模拟）。在下方输入你的问题，或试试这些：
-      </p>
+    <div className="chat-empty flex flex-col items-center justify-center text-center px-6 py-16 view-enter">
+      <div className="empty-orbit" aria-hidden><HermesMark /><span/><span/></div>
+      <span className="eyebrow">A LITTLE SPACE FOR BIG IDEAS</span>
+      <h3 className="empty-title">有什么想一起完成？</h3>
+      <p className="text-[13px] mb-6 max-w-[380px]" style={{ color: 'var(--fg-secondary)' }}>从一个想法开始，剩下的我们一起梳理。<br/>当前为演示会话，不连接真实 Hermes。</p>
       <div className="flex flex-wrap gap-2 justify-center">
         {suggestions.map(s => (
           <button key={s} className="btn" onClick={() => onSuggest(s)}>{s}</button>
@@ -309,37 +324,60 @@ function SlashMenu({
 /* ---------- 主视图 ----------
  * 数据流：useSessionList / useChatSession → HermesDataSource（当前为 Mock 实现）。
  * 本组件只负责布局与 UI 状态（输入框、折叠），不直接读写 mock 数据。 */
-export function ChatView({ connectionOk }: { connectionOk: boolean }) {
+export function ChatView({ connectionOk, newChatRequest = 0 }: { connectionOk: boolean; newChatRequest?: number }) {
   const [activeId, setActiveId] = useState('s1')
-  const [input, setInput] = useState('')
-  const [listOpen, setListOpen] = useState(true)
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const input = drafts[activeId] ?? ''
+  const setInput = (text: string) => setDrafts(prev => ({ ...prev, [activeId]: text }))
+  const narrow = useMediaQuery('(max-width: 1000px)')
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const [listOpen, setListOpen] = useState(() => !window.matchMedia('(max-width: 1000px)').matches)
+  const [sessionSearch, setSessionSearch] = useState('')
   const [cursor, setCursor] = useState(0)
   const [slashActive, setSlashActive] = useState(0)
   const [slashOff, setSlashOff] = useState(false) // Esc 手动关闭后，本次输入不再弹出
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const followRef = useRef(false)
+  const activeRef = useRef(activeId)
+  activeRef.current = activeId
 
   const sessions = useSessionList()
   const {
-    messages, runs, sending, loading, error, approvals,
+    messages, runs, sending, loading, error, actionError, approvals,
     sessionPending, sessionDecided,
-    agentState, send, decide, retry
+    agentState, send, decide, retry, reload
   } = useChatSession(activeId)
 
   const meta = STATE_META[agentState]
   const activeSession = sessions.find(s => s.id === activeId)
 
+  useEffect(() => { setListOpen(!narrow) }, [narrow])
+  useEffect(() => { if (newChatRequest > 0) { setActiveId('s6'); if (narrow) setListOpen(false); inputRef.current?.focus() } }, [newChatRequest])
+  useEffect(() => {
+    if (sessions.length && !sessions.some(s => s.id === activeId)) setActiveId(sessions[0].id)
+  }, [sessions, activeId])
+  useEffect(() => {
+    if (followRef.current) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: reducedMotion ? 'instant' : 'smooth' })
+  }, [messages, sending, reducedMotion])
+
   const handleSend = (text?: string) => {
     const t = (text ?? input).trim()
-    if (!t || sending || !connectionOk) return
+    if (!t || sending || loading || error || !connectionOk) return
+    const origin = activeId
+    followRef.current = true
     setInput('')
-    void send(t).then(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }))
+    void send(t).then(ok => { if (!ok) setDrafts(prev => prev[origin] ? prev : ({ ...prev, [origin]: t })) })
   }
 
   const switchSession = (id: string) => {
+    if (narrow) setListOpen(false)
     if (id === activeId) return
+    followRef.current = false
     setActiveId(id)
-    setInput('')
+    setSlashOff(false)
+    setCursor(drafts[id]?.length ?? 0)
   }
 
   /* slash 联想：取光标前的 /xxx token（行首或空白后） */
@@ -370,6 +408,7 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
   }
 
   const onComposerKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
     if (slashOpen) {
       if (e.key === 'ArrowDown') { e.preventDefault(); setSlashActive(a => Math.min(slashMatches.length - 1, a + 1)); return }
       if (e.key === 'ArrowUp') { e.preventDefault(); setSlashActive(a => Math.max(0, a - 1)); return }
@@ -380,33 +419,31 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
     if (e.key === 'Escape') { inputRef.current?.blur() }
   }
 
-  return (
-    <div className="flex flex-1 min-h-0">
-      {/* 会话列表（可折叠，数据来自 DataSource） */}
-      {listOpen ? (
-        <aside aria-label="会话列表" className="shrink-0 flex flex-col" style={{ width: 248, borderRight: '1px solid var(--border-subtle)' }}>
+  const sessionPanel = (
+    <aside aria-label="会话列表" className="session-sidebar">
           <div className="px-3 pt-3 pb-2 flex items-center justify-between">
             <span className="text-[12px] font-semibold" style={{ color: 'var(--fg-secondary)' }}>会话</span>
             <div className="flex items-center gap-1">
-              <MockBadge label="MOCK" />
+              <button className="icon-btn" aria-label="打开空白演示会话" title="空白演示会话" onClick={() => switchSession('s6')}><MessageSquarePlus size={16}/></button>
               <button className="btn" style={{ padding: 4 }} onClick={() => setListOpen(false)} aria-label="折叠会话列表" title="折叠会话列表">
                 <PanelLeftClose size={14} aria-hidden />
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-0.5" role="listbox" aria-label="选择会话">
-            {sessions.map(s => {
+          <label className="session-search"><Search size={14} aria-hidden/><input aria-label="搜索会话" placeholder="搜索会话" value={sessionSearch} onChange={e => setSessionSearch(e.target.value)}/></label>
+          <span className="sidebar-section">最近会话</span>
+          <div className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-0.5" role="group" aria-label="选择会话">
+            {sessions.filter(s => s.title.toLowerCase().includes(sessionSearch.toLowerCase())).map(s => {
               const active = activeId === s.id
               const pCount = pendingApprovalsForSession(approvals, s.id).length
               return (
                 <button
                   key={s.id}
-                  role="option"
-                  aria-selected={active}
+                  aria-pressed={active}
                   onClick={() => switchSession(s.id)}
-                  className="text-left w-full px-3 py-2.5 transition-colors"
+                  className="session-row text-left w-full px-3 py-3 transition-colors"
                   style={active
-                    ? { background: 'var(--accent-soft)', borderRadius: 10 }
+                    ? { background: 'var(--session-selected)', borderRadius: 12 }
                     : { borderRadius: 10 }}
                   onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-fill)' }}
                   onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
@@ -414,7 +451,7 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-medium truncate flex-1">{s.title}</span>
                     {pCount > 0 && (
-                      <span className="text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: 'var(--warning)', color: '#fff' }} title={`${pCount} 待审批`}>{pCount}</span>
+                      <span className="text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: 'var(--warning-soft)', color: 'var(--warning)' }} title={`${pCount} 待审批`}>{pCount}</span>
                     )}
                     {s.unread ? (
                       <span className="text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}>{s.unread}</span>
@@ -424,29 +461,29 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
                 </button>
               )
             })}
+            {sessionSearch && !sessions.some(s => s.title.toLowerCase().includes(sessionSearch.toLowerCase())) && <div className="session-empty-search"><Search size={20}/><p>没有找到会话</p><button className="btn btn-plain" onClick={() => setSessionSearch('')}>清除搜索</button></div>}
           </div>
+          <div className="session-footnote"><Sparkles size={13}/><span>草稿按会话保留在本次页面中</span></div>
         </aside>
-      ) : (
-        <div className="shrink-0 flex flex-col items-center pt-3 gap-2" style={{ width: 48, borderRight: '1px solid var(--border-subtle)' }}>
-          <button className="btn" style={{ padding: 6 }} onClick={() => setListOpen(true)} aria-label="展开会话列表" title="展开会话列表">
-            <PanelLeftOpen size={15} aria-hidden />
-          </button>
-          <button className="btn" style={{ padding: 6 }} onClick={() => switchSession('s6')} aria-label="新会话" title="新会话">
-            <MessageSquarePlus size={15} aria-hidden />
-          </button>
-        </div>
-      )}
+  )
+
+  return (
+    <div className="chat-layout flex flex-1 min-h-0">
+      {/* 会话列表（可折叠，数据来自 DataSource） */}
+      {listOpen && !narrow && sessionPanel}
+      <Modal open={narrow && listOpen} onClose={() => setListOpen(false)} label="会话列表" className="session-sheet">{sessionPanel}</Modal>
 
       {/* 对话区 */}
       <section aria-label="对话" className="flex-1 flex flex-col min-w-0">
-        <div className="hairline-b px-5 py-2.5 flex items-center gap-2">
-          <span className="font-semibold text-[14px]">{activeSession?.title ?? '…'}</span>
+        <div className="chat-header flex items-center gap-2">
+          <button className="icon-btn" aria-label={listOpen ? '折叠会话列表' : '展开会话列表'} aria-expanded={listOpen} onClick={() => setListOpen(v => !v)}>{listOpen ? <PanelLeftClose size={17}/> : <PanelLeftOpen size={17}/>}</button>
+          <div className="chat-heading"><span className="font-semibold text-[14px]">{activeSession?.title ?? '会话'}</span><span>{activeSession?.profile ?? '默认'} · 演示会话</span></div>
           {sessionPending.length > 0 && (
-            <span className="chip" style={{ color: 'var(--warning)', borderColor: 'var(--warning)' }}>
+            <button className="chip approval-jump" onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: reducedMotion ? 'instant' : 'smooth' })} style={{ color: 'var(--warning)', background: 'var(--warning-soft)' }}>
               <History size={11} aria-hidden />{sessionPending.length} 待审批
-            </span>
+            </button>
           )}
-          <span className="chip ml-auto" role="status" aria-live="polite" style={{ color: meta.color, borderColor: meta.color }}>
+          <span className="agent-status ml-auto" role="status" aria-live="polite" style={{ color: meta.color, borderColor: meta.color }}>
             {meta.spin && <Loader2 size={11} className="animate-spin" aria-hidden />}
             {meta.label}
           </span>
@@ -461,7 +498,7 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-4" key={activeId}>
+        <div ref={scrollRef} className="chat-scroll flex-1 overflow-y-auto" key={activeId} onScroll={e => { const el = e.currentTarget; followRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 90 }}>
           <div className="reading-col view-enter">
             {loading ? (
               <div className="flex items-center gap-2 py-10 justify-center text-[12.5px]" style={{ color: 'var(--fg-tertiary)' }} role="status">
@@ -472,6 +509,7 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
                 <WifiOff size={20} style={{ color: 'var(--warning)' }} className="mx-auto mb-2" aria-hidden />
                 <p className="text-[13px] font-medium" style={{ color: 'var(--fg-primary)' }}>数据加载失败</p>
                 <p className="text-[12px] mt-1 max-w-[420px] mx-auto" style={{ color: 'var(--fg-secondary)' }}>{error}</p>
+                <button className="btn mt-3" onClick={reload}>重新加载</button>
                 <p className="text-[11.5px] mt-2" style={{ color: 'var(--fg-tertiary)' }}>
                   live 模式部分接口尚未实现属预期行为，见 docs/INTEGRATION-PLAN.md §8
                 </p>
@@ -501,10 +539,10 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
 
         <ToolTimeline runs={runs} onRetry={retry} />
 
-        <div className="px-4 pb-3 pt-1">
+        <div className="composer-area">
           <div className="reading-col">
-            <div className="p-2 pl-4 flex items-end gap-2 relative"
-              style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', borderRadius: 20, boxShadow: 'var(--shadow-sm)' }}>
+            {actionError && <p className="action-error" role="alert">操作未完成：{actionError}。草稿已保留，请核对后再试。</p>}
+            <div className={`composer flex items-end gap-2 relative ${sending ? 'is-sending' : ''}`}>
               <label htmlFor="composer" className="sr-only">输入消息，Enter 发送，Shift+Enter 换行，/ 唤起命令联想</label>
               {slashOpen && (
                 <SlashMenu matches={slashMatches} active={slashActive} onSelect={insertSlash} onHover={setSlashActive} />
@@ -515,21 +553,22 @@ export function ChatView({ connectionOk }: { connectionOk: boolean }) {
                 className="flex-1"
                 style={{ border: 'none', background: 'transparent', resize: 'none', boxShadow: 'none', outline: 'none', fontSize: '13.5px', color: 'var(--fg-primary)', padding: '8px 0' }}
                 rows={2}
-                placeholder={connectionOk ? '输入消息… / 唤起命令，Enter 发送（原型：返回模拟回复）' : '已断连（模拟），无法发送'}
+                onInput={e => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = `${Math.min(160, el.scrollHeight)}px` }}
+                placeholder={connectionOk ? '发消息给 Hermes…' : '已断连（模拟），无法发送'}
                 value={input}
-                disabled={!connectionOk}
+                disabled={!connectionOk || loading || !!error}
                 onChange={e => { setInput(e.target.value); setSlashOff(false); setSlashActive(0) }}
                 onSelect={syncCursor}
                 onKeyUp={syncCursor}
                 onClick={syncCursor}
                 onKeyDown={onComposerKeyDown}
               />
-              <button className="btn btn-primary" style={{ borderRadius: '50%', width: 34, height: 34, padding: 0 }} onClick={() => handleSend()} disabled={!input.trim() || sending || !connectionOk} aria-label="发送消息">
-                <SendHorizonal size={15} aria-hidden />
+              <button className="btn btn-primary" style={{ borderRadius: '50%', width: 34, height: 34, padding: 0 }} onClick={() => handleSend()} disabled={!input.trim() || sending || loading || !!error || !connectionOk} aria-label="发送消息">
+                <ArrowUp size={18} aria-hidden />
               </button>
             </div>
-            <p className="t-micro mt-2 text-center">
-              Enter 发送 · Shift+Enter 换行 · Esc 取消聚焦
+            <p className="composer-hint t-micro">
+              <span><kbd>↵</kbd> 发送 <span className="composer-extra">· Shift + ↵ 换行 · / 命令</span></span><span>回复与操作均为模拟</span>
             </p>
           </div>
         </div>

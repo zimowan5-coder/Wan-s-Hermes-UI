@@ -1,3 +1,5 @@
+> **当前实现为 v0.5。** 当前视觉决策、tokens 与验证边界见 [UI-REFINEMENT.md](UI-REFINEMENT.md)，实际检查见 [UI-QA-RESULTS.json](UI-QA-RESULTS.json)。下文保留 v0.2–v0.4 的历史设计讨论与旧色板，不应据其旧比值判定当前界面。
+
 # Hermes UI 设计系统（v0.4）
 
 > 目标：Apple 级交互品质的 Windows AI 桌面工作台设计语言。
