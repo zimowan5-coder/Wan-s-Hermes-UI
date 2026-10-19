@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-19T05:08:55.648Z",
+  "date": "2026-10-19T06:44:41.869Z",
   "browser": "141.0.7390.37",
   "baseURL": "http://127.0.0.1:4174",
   "matrix": [
@@ -44,6 +44,14 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "light",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "light",
       "width": 1440,
@@ -92,6 +100,14 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "light",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "light",
       "width": 960,
@@ -140,6 +156,14 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "light",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "light",
       "width": 390,
@@ -188,6 +212,14 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "dark",
+      "width": 1440,
+      "viewport": 1440,
+      "documentWidth": 1440,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "dark",
       "width": 1440,
@@ -236,6 +268,14 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "dark",
+      "width": 960,
+      "viewport": 960,
+      "documentWidth": 960,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "dark",
       "width": 960,
@@ -277,6 +317,14 @@
     },
     {
       "view": "messaging",
+      "theme": "dark",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "artifacts",
       "theme": "dark",
       "width": 390,
       "viewport": 390,
@@ -303,9 +351,9 @@
       "violations": []
     },
     {
-      "view": "tasks",
+      "view": "skills",
       "theme": "light",
-      "tab": "运维",
+      "tab": "工具集",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -323,7 +371,7 @@
     {
       "view": "skills",
       "theme": "light",
-      "tab": "工具集",
+      "tab": "MCP",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -332,7 +380,16 @@
     {
       "view": "skills",
       "theme": "light",
-      "tab": "Agents",
+      "tab": "插件",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "light",
+      "tab": "机器人",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -357,6 +414,24 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "light",
+      "tab": "图片",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "artifacts",
+      "theme": "light",
+      "tab": "链接",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "light",
       "tab": "外观",
@@ -368,7 +443,7 @@
     {
       "view": "settings",
       "theme": "light",
-      "tab": "用量",
+      "tab": "模型",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -377,7 +452,34 @@
     {
       "view": "settings",
       "theme": "light",
-      "tab": "系统",
+      "tab": "安全与审批",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "提供方与密钥",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "配置档案",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "light",
+      "tab": "已归档对话",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -402,9 +504,9 @@
       "violations": []
     },
     {
-      "view": "tasks",
+      "view": "skills",
       "theme": "dark",
-      "tab": "运维",
+      "tab": "工具集",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -422,7 +524,7 @@
     {
       "view": "skills",
       "theme": "dark",
-      "tab": "工具集",
+      "tab": "MCP",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -431,7 +533,16 @@
     {
       "view": "skills",
       "theme": "dark",
-      "tab": "Agents",
+      "tab": "插件",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "skills",
+      "theme": "dark",
+      "tab": "机器人",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -456,6 +567,24 @@
       "violations": []
     },
     {
+      "view": "artifacts",
+      "theme": "dark",
+      "tab": "图片",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "artifacts",
+      "theme": "dark",
+      "tab": "链接",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
       "view": "settings",
       "theme": "dark",
       "tab": "外观",
@@ -467,7 +596,7 @@
     {
       "view": "settings",
       "theme": "dark",
-      "tab": "用量",
+      "tab": "模型",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -476,7 +605,34 @@
     {
       "view": "settings",
       "theme": "dark",
-      "tab": "系统",
+      "tab": "安全与审批",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "提供方与密钥",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "配置档案",
+      "width": 390,
+      "viewport": 390,
+      "documentWidth": 390,
+      "violations": []
+    },
+    {
+      "view": "settings",
+      "theme": "dark",
+      "tab": "已归档对话",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -492,7 +648,7 @@
       "violations": []
     },
     {
-      "state": "session-dialog",
+      "state": "navigation-dialog",
       "width": 390,
       "viewport": 390,
       "documentWidth": 390,
@@ -564,11 +720,31 @@
       "passed": true
     },
     {
-      "name": "Settings toast does not cancel in-flight update check",
+      "name": "Command center actions run independently",
       "passed": true
     },
     {
       "name": "120% scale fits small viewport and applies to pixel controls",
+      "passed": true
+    },
+    {
+      "name": "Session menu: pin, rename, archive and restore",
+      "passed": true
+    },
+    {
+      "name": "Running turn: queue, stop and auto-send",
+      "passed": true
+    },
+    {
+      "name": "Attachments, model picker and voice stay per session",
+      "passed": true
+    },
+    {
+      "name": "Advanced mode shows the right panel; overlays open from shortcuts",
+      "passed": true
+    },
+    {
+      "name": "Command center: sessions, usage, maintenance",
       "passed": true
     },
     {
@@ -591,14 +767,14 @@
     "command-dark.png"
   ],
   "productionAssets": [
-    "./assets/index-D6WC9_YD.js",
-    "./assets/index-C9daLANB.css"
+    "./assets/index-CA8h_vK9.js",
+    "./assets/index-D7Aob8Oo.css"
   ],
   "passed": true,
   "summary": {
-    "matrix": 36,
-    "secondary": 24,
-    "interactionChecks": 17,
+    "matrix": 42,
+    "secondary": 36,
+    "interactionChecks": 22,
     "layoutOrAccessibilityFailures": 0,
     "browserErrors": 0
   }

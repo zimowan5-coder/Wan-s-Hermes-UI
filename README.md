@@ -19,13 +19,20 @@
 | ![浅色空会话](docs/screenshots/v05/empty-light.png) | ![深色空会话](docs/screenshots/v05/empty-dark.png) |
 | ![浅色任务看板](docs/screenshots/v05/board-light.png) | ![深色任务看板](docs/screenshots/v05/board-dark.png) |
 
-## 最新进展 · v0.7 Calm（分支 `feature/macos-glass-ui`）
+## 最新进展 · v0.8 功能入口对齐官方（分支 `feature/macos-glass-ui`）
+
+- 对照官方 Hermes Desktop 源码逐项核对功能入口，见 `docs/FEATURE-MAP.md`
+- 侧边栏合成一列（入口 + 会话列表），会话操作菜单、配置档案菜单
+- 新增：产物页、命令中心、子代理面板、会话导入、快捷键面板、高级模式右侧面板、重组后的设置
+- 输入框：附件、模型与推理强度、听写与语音对话、停止 / 排队、`@` 引用、官方完整斜杠命令
+
+![v0.8 聊天](docs/screenshots/v08/chat.png)
+
+## v0.7 Calm
 
 - 配色改为参考 Gemini 的安静风格：白底 + 浅灰，大面积留白；彩色只留给渐变标志和输入框下方的淡光
 - 审批卡、状态标签改为素色，风险用小圆点表示；用户消息改为浅灰气泡
 - 保留 v0.6 的 macOS 窗口按钮、动效、Ctrl+K 命令面板、强调色设置
-
-![v0.7 聊天](docs/screenshots/v07/chat-light.png)
 
 ## v0.6 macOS Glass
 

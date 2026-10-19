@@ -1,7 +1,4 @@
-import {
-  Bell, CalendarClock, Command, Database, History, MessageSquare,
-  Search, Settings, Sparkles, Sun, Wifi, WifiOff
-} from 'lucide-react'
+import { Command, History, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Modal } from './Modal'
 
@@ -106,7 +103,7 @@ export function CommandPalette({
             ref={inputRef}
             className="flex-1 bg-transparent py-3.5 text-[14px] outline-none"
             style={{ color: 'var(--fg-primary)' }}
-            placeholder="输入命令或搜索…（导航 / 操作）"
+            placeholder="搜索会话、页面与操作…"
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => {
@@ -165,29 +162,9 @@ export function CommandPalette({
           <span className="flex items-center gap-1"><kbd className="chip font-mono">↑↓</kbd> 选择</span>
           <span className="flex items-center gap-1"><kbd className="chip font-mono">↵</kbd> 执行</span>
           <span className="flex items-center gap-1"><kbd className="chip font-mono">esc</kbd> 关闭</span>
-          <span className="ml-auto">MOCK 原型命令面板</span>
+          <span className="ml-auto">演示版命令面板</span>
         </div>
     </Modal>
   )
 }
 
-/** 构建默认命令表（由 App 传入闭包） */
-export function buildCommands(opts: {
-  go: (v: 'chat' | 'tasks' | 'skills' | 'memory' | 'messaging' | 'settings') => void
-  cycleTheme: () => void
-  toggleConnection: () => void
-  newChat: () => void
-  connectionOk: boolean
-}): PaletteCommand[] {
-  return [
-    { id: 'go-chat', title: '前往聊天', keywords: 'chat 聊天 会话', group: '导航', icon: MessageSquare, run: () => opts.go('chat') },
-    { id: 'go-tasks', title: '前往任务', keywords: 'tasks 任务 定时 看板', group: '导航', icon: CalendarClock, run: () => opts.go('tasks') },
-    { id: 'go-skills', title: '前往技能', keywords: 'skills 技能 插件 agents', group: '导航', icon: Sparkles, run: () => opts.go('skills') },
-    { id: 'go-memory', title: '前往记忆', keywords: 'memory 记忆 图谱', group: '导航', icon: Database, run: () => opts.go('memory') },
-    { id: 'go-messaging', title: '前往消息', keywords: 'messaging 消息 通道', group: '导航', icon: Bell, run: () => opts.go('messaging') },
-    { id: 'go-settings', title: '前往设置', keywords: 'settings 设置', group: '导航', icon: Settings, run: () => opts.go('settings') },
-    { id: 'new-chat', title: '新会话（模拟）', keywords: 'new 新会话 新建', group: '操作', icon: MessageSquare, run: opts.newChat },
-    { id: 'cycle-theme', title: '切换主题', hint: '浅色 → 深色 → 跟随系统', keywords: 'theme 主题 深色 浅色', group: '操作', icon: Sun, run: opts.cycleTheme },
-    { id: 'toggle-conn', title: opts.connectionOk ? '断开连接（模拟）' : '恢复连接（模拟）', keywords: 'connection 连接 断连', group: '操作', icon: opts.connectionOk ? WifiOff : Wifi, run: opts.toggleConnection },
-  ]
-}

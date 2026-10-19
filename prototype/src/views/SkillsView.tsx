@@ -52,19 +52,23 @@ const BOT_SEED: AgentBot[] = [
 
 const PROFILES = ['默认', '小管', 'Codex 协作']
 
-type TabId = 'skills' | 'connectors' | 'toolsets' | 'agents'
+type TabId = 'skills' | 'toolsets' | 'connectors' | 'mcp' | 'plugins' | 'agents'
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'skills', label: 'Skills' },
-  { id: 'connectors', label: '连接器' },
+  { id: 'skills', label: '技能' },
   { id: 'toolsets', label: '工具集' },
-  { id: 'agents', label: 'Agents' }
+  { id: 'connectors', label: '连接器' },
+  { id: 'mcp', label: 'MCP' },
+  { id: 'plugins', label: '插件' },
+  { id: 'agents', label: '机器人' }
 ]
 
 const TAB_INTRO: Record<TabId, string> = {
   skills: '管理 Agent 的技能：开关控制是否可用，展开查看派生的 slash 命令。',
   connectors: '连接器为 Agent 带来外部能力；断开后相关工具立即不可用（模拟）。',
   toolsets: '工具集按作用域划分能力边界；关闭后该集合的工具不再被调用（模拟）。',
+  mcp: 'MCP 服务器为 Hermes 接入外部工具，例如文件系统、GitHub、浏览器（模拟）。',
+  plugins: '插件为桌面端增加页面和功能，例如看板、机器人（模拟）。',
   agents: ''
 }
 
@@ -129,6 +133,16 @@ function Row({ children }: { children: React.ReactNode }) {
 /* ---------- 主视图 ---------- */
 
 export function SkillsView() {
+  const [mcpServers, setMcpServers] = useState([
+    { id: 'm1', name: 'filesystem', desc: '读写本地文件', enabled: true },
+    { id: 'm2', name: 'github', desc: '仓库、Issue 与 PR', enabled: true },
+    { id: 'm3', name: 'browser', desc: '智能体浏览器', enabled: false }
+  ])
+  const [plugins, setPlugins] = useState([
+    { id: 'p1', name: 'kanban', desc: '看板：任务 › 看板', enabled: true },
+    { id: 'p2', name: 'hermes-bots', desc: '机器人：把配置档案变成消息平台上的 bot', enabled: true },
+    { id: 'p3', name: 'radio', desc: '电台：工作时的背景音乐', enabled: false }
+  ])
   const [tab, setTab] = useState<TabId>('skills')
 
   // Skills tab
@@ -204,7 +218,7 @@ export function SkillsView() {
         {/* 标题区 */}
         <div className="page-head">
           <div className="flex items-center gap-2">
-            <h2 className="t-title" style={{ color: 'var(--fg-primary)' }}>技能</h2>
+            <h2 className="t-title" style={{ color: 'var(--fg-primary)' }}>技能与工具</h2>
             <MockBadge />
           </div>
           {tab !== 'agents' && (
@@ -370,6 +384,25 @@ export function SkillsView() {
                 </Row>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ---- MCP / 插件 ---- */}
+        {(tab === 'mcp' || tab === 'plugins') && (
+          <div className="view-enter" key={tab}>
+            <div className="grouped">
+              {(tab === 'mcp' ? mcpServers : plugins).map(item => (
+                <div key={item.id} className="grouped-row">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13.5px] font-semibold font-mono">{item.name}</div>
+                    <div className="t-caption">{item.desc}</div>
+                  </div>
+                  <Toggle checked={item.enabled} label={`${item.enabled ? '禁用' : '启用'} ${item.name}`}
+                    onChange={() => (tab === 'mcp' ? setMcpServers : setPlugins)(list => list.map(x => x.id === item.id ? { ...x, enabled: !x.enabled } : x))} />
+                </div>
+              ))}
+            </div>
+            <button className="btn mt-4" type="button"><Plus size={14} aria-hidden />{tab === 'mcp' ? '添加 MCP 服务器（模拟）' : '浏览插件目录（模拟）'}</button>
           </div>
         )}
 

@@ -1,483 +1,389 @@
-import { onGroupKeyDown } from '../lib/keyboard'
-import { useEffect, useRef, useState } from 'react'
 import {
-  BadgeCheck, Cpu, Download, Gauge, HardDrive, Info,
-  Loader2, Monitor, Moon, Palette, Plug2, RefreshCw, RotateCcw,
-  Server, Sun, User, Wifi
+  Archive, ArchiveRestore, BadgeCheck, Bell, Bot, Brain, Cpu, Download, FolderOpen, Gauge, Info, Keyboard, KeyRound,
+  Layers, MessageSquare, Mic, Monitor, Moon, Palette, Plug2, Plus, Puzzle, Server, Shield, SlidersHorizontal, Sun, Upload, User, Wrench
 } from 'lucide-react'
-import { MockBadge } from '../components/MockBadge'
-import { useTheme, type ThemeMode, ACCENTS, useAccent } from '../theme/theme'
+import { useEffect, useState, type ReactNode } from 'react'
+import type { CommandCenterTab } from '../components/Overlays'
+import { onGroupKeyDown } from '../lib/keyboard'
+import type { InterfaceMode } from '../lib/prefs'
+import type { MergedSession } from '../lib/sessions'
+import { ACCENTS, useAccent, useTheme, type ThemeMode } from '../theme/theme'
 
-/* ============ 局部 MOCK 常量（本文件自包含，不碰 mock/data.ts） ============ */
+/**
+ * 设置：分组与官方 Hermes Desktop 一致（模型 / 对话 / 外观 / 工作区 / 安全 / 记忆与上下文 / 语音 / 高级，
+ * 以及提供方、网关、MCP、插件、通知、密码与登录、配置档案、已归档对话、键盘快捷键、关于）。
+ * 除外观与界面模式会真实生效外，其余选项均为演示，改动只保存在本次页面。
+ */
+export type SettingsSection =
+  | 'general' | 'model' | 'chat' | 'appearance' | 'workspace' | 'safety' | 'memory' | 'voice' | 'advanced'
+  | 'providers' | 'gateway' | 'mcp' | 'plugins' | 'notifications' | 'vault'
+  | 'profiles' | 'archived' | 'shortcuts' | 'about'
 
-interface Profile {
-  id: string
-  name: string
-  desc: string
-  model: string
-  connection: string
+const GROUPS: { title: string; items: { id: SettingsSection; label: string; icon: typeof User }[] }[] = [
+  { title: '偏好', items: [
+    { id: 'general', label: '常规', icon: SlidersHorizontal }, { id: 'model', label: '模型', icon: Cpu }, { id: 'chat', label: '对话', icon: MessageSquare },
+    { id: 'appearance', label: '外观', icon: Palette }, { id: 'workspace', label: '工作区', icon: FolderOpen }, { id: 'safety', label: '安全与审批', icon: Shield },
+    { id: 'memory', label: '记忆与上下文', icon: Brain }, { id: 'voice', label: '语音', icon: Mic }, { id: 'advanced', label: '高级', icon: Wrench }
+  ] },
+  { title: '连接', items: [
+    { id: 'providers', label: '提供方与密钥', icon: KeyRound }, { id: 'gateway', label: '网关', icon: Server }, { id: 'mcp', label: 'MCP', icon: Plug2 },
+    { id: 'plugins', label: '插件', icon: Puzzle }, { id: 'notifications', label: '通知', icon: Bell }, { id: 'vault', label: '密码与登录', icon: Shield }
+  ] },
+  { title: '账户', items: [
+    { id: 'profiles', label: '配置档案', icon: User }, { id: 'archived', label: '已归档对话', icon: Archive },
+    { id: 'shortcuts', label: '键盘快捷键', icon: Keyboard }, { id: 'about', label: '关于', icon: Info }
+  ] }
+]
+const ALL = GROUPS.flatMap(g => g.items)
+
+/* ---------- 通用行：开关 / 下拉 / 文本值 / 按钮 ---------- */
+type Control =
+  | { type: 'toggle'; value: boolean }
+  | { type: 'select'; options: string[]; value: string }
+  | { type: 'value'; text: string }
+  | { type: 'button'; label: string }
+type RowDef = { label: string; desc?: string; control: Control }
+type Block = { title: string; rows: RowDef[] }
+const t = (value: boolean): Control => ({ type: 'toggle', value })
+const sel = (options: string[], value = options[0]): Control => ({ type: 'select', options, value })
+const val = (text: string): Control => ({ type: 'value', text })
+const btn = (label: string): Control => ({ type: 'button', label })
+
+const SCHEMA: Partial<Record<SettingsSection, Block[]>> = {
+  model: [
+    { title: '主模型', rows: [
+      { label: '默认模型', desc: '新会话使用的模型，可在输入框随时切换', control: sel(['Hermes 4 70B', 'Hermes 4 405B', 'Hermes 3 8B · 本地']) },
+      { label: '默认推理强度', control: sel(['中', '低', '高']) },
+      { label: '快速模式', desc: '优先速度，适合简单任务', control: t(false) }
+    ] },
+    { title: '辅助与备用', rows: [
+      { label: '辅助模型', desc: '用于看图、摘要、压缩等辅助任务', control: sel(['Hermes 4 70B', 'Hermes 3 8B · 本地']) },
+      { label: '备用模型', desc: '主模型不可用时自动切换', control: sel(['Hermes 3 8B · 本地', '不使用']) },
+      { label: '多智能体协作（MoA）', desc: '/moa 命令使用的模型组合', control: btn('编辑组合') }
+    ] }
+  ],
+  chat: [
+    { title: '行为', rows: [
+      { label: '发送消息', control: sel(['Enter 发送，Shift+Enter 换行', 'Ctrl+Enter 发送']) },
+      { label: '运行中继续输入时', control: sel(['排队，等当前回合结束', '引导当前回合']) },
+      { label: '专注视图', desc: '只显示你的提示词与最终回复', control: t(false) },
+      { label: '显示消息时间', control: t(true) }
+    ] },
+    { title: '附件', rows: [
+      { label: '粘贴图片时自动压缩', control: t(true) },
+      { label: '附加网址时抓取页面内容', control: t(true) }
+    ] }
+  ],
+  workspace: [
+    { title: '项目', rows: [
+      { label: '默认项目文件夹', control: val('~/hermes-workspace') },
+      { label: '按项目给会话分组', control: t(false) }
+    ] },
+    { title: '执行', rows: [
+      { label: 'Shell 环境', control: sel(['PowerShell', 'Git Bash', 'WSL']) },
+      { label: '允许读写的范围', control: sel(['仅项目文件夹', '整个用户目录']) }
+    ] }
+  ],
+  safety: [
+    { title: '审批', rows: [
+      { label: '危险操作审批', desc: '执行命令、写文件、联网前是否先问你', control: sel(['每次询问', '仅高风险操作询问', '全部自动批准（YOLO）']) },
+      { label: '记住本会话的批准', control: t(true) }
+    ] },
+    { title: '隐私与检查点', rows: [
+      { label: '允许访问本地与私有网址', control: t(false) },
+      { label: '修改文件前自动建立检查点', desc: '可用 /rollback 还原', control: t(true) }
+    ] }
+  ],
+  memory: [
+    { title: '持久记忆', rows: [
+      { label: '启用长期记忆', control: t(true) },
+      { label: '写入记忆前先让我确认', control: t(false) },
+      { label: '记忆条目与知识图谱', desc: '在侧边栏「记忆」中查看和编辑', control: val('前往 记忆') }
+    ] },
+    { title: '上下文与压缩', rows: [
+      { label: '上下文快满时自动压缩', control: t(true) },
+      { label: '压缩触发点', control: sel(['80%', '70%', '90%']) }
+    ] }
+  ],
+  voice: [
+    { title: '语音对话', rows: [
+      { label: '语音对话引擎', control: sel(['语音转文字 + Hermes 语音', 'GPT-Live（全双工，需要 OpenAI 密钥）']) },
+      { label: '朗读回复', control: t(false) },
+      { label: '唤醒词', desc: '说出唤醒词即可开始对话', control: t(false) }
+    ] },
+    { title: '听写', rows: [{ label: '听写语言', control: sel(['自动识别', '中文', 'English']) }] }
+  ],
+  advanced: [
+    { title: '智能体', rows: [
+      { label: '单回合最多工具调用', control: sel(['50', '20', '100']) },
+      { label: '允许派出子代理', control: t(true) }
+    ] },
+    { title: '终端与输出', rows: [
+      { label: '终端后端', control: sel(['本地', 'Docker', 'SSH']) },
+      { label: '工具输出长度上限', control: sel(['16 KB', '64 KB']) }
+    ] },
+    { title: '桌面', rows: [
+      { label: '开机自动启动', control: t(false) },
+      { label: '快速输入窗口', desc: '在任何地方唤出一个小输入框', control: t(false) },
+      { label: '屏幕捕获', desc: '允许 Hermes 截取屏幕作为上下文', control: t(false) }
+    ] }
+  ],
+  providers: [
+    { title: '账号', rows: [{ label: 'Nous Portal', control: val('已登录（演示）') }] },
+    { title: 'API 密钥', rows: [
+      { label: 'OpenRouter', control: val('sk-or-••••••••3f2a') },
+      { label: 'OpenAI', control: btn('添加密钥') },
+      { label: 'Anthropic', control: btn('添加密钥') }
+    ] },
+    { title: '其他', rows: [
+      { label: '自定义端点', desc: '兼容 OpenAI 接口的服务', control: btn('添加端点') },
+      { label: '本地模型', desc: 'Ollama、LM Studio 等', control: val('Hermes 3 8B · 运行中') }
+    ] }
+  ],
+  gateway: [
+    { title: '当前窗口', rows: [
+      { label: '连接', control: val('本地后端 · 已连接（演示）') },
+      { label: '启动时自动运行消息网关', control: t(true) }
+    ] },
+    { title: '已保存的连接', rows: [
+      { label: '家里的 Mac mini（SSH）', control: btn('切换') },
+      { label: '添加连接', control: btn('添加') }
+    ] }
+  ],
+  mcp: [
+    { title: 'MCP 服务器', rows: [
+      { label: 'filesystem', desc: '读写本地文件', control: t(true) },
+      { label: 'github', desc: '仓库、Issue、PR', control: t(true) },
+      { label: 'browser', desc: '智能体浏览器', control: t(false) },
+      { label: '添加服务器', control: btn('添加') }
+    ] }
+  ],
+  plugins: [
+    { title: '已安装插件', rows: [
+      { label: '看板（kanban）', desc: '任务 › 看板', control: t(true) },
+      { label: '机器人（hermes-bots）', desc: '把 Hermes 变成消息平台上的机器人', control: t(true) },
+      { label: '电台（radio）', control: t(false) }
+    ] }
+  ],
+  notifications: [
+    { title: '桌面通知', rows: [
+      { label: '回合完成时通知', control: t(true) },
+      { label: '需要审批时通知', control: t(true) },
+      { label: '定时任务出错时通知', control: t(true) }
+    ] },
+    { title: '声音', rows: [{ label: '提示音', control: t(false) }] }
+  ],
+  vault: [
+    { title: '已保存的凭据', rows: [
+      { label: 'Telegram Bot Token', control: val('••••••••（系统钥匙串）') },
+      { label: '密码管理器', desc: '1Password、Bitwarden', control: btn('连接') }
+    ] }
+  ]
 }
 
-const PROFILES: Profile[] = [
-  { id: 'p1', name: '默认', desc: '日常主力', model: 'Nous Hermes 2（模拟）', connection: '本地 gateway（模拟）' },
-  { id: 'p2', name: 'Codex 协作', desc: '点子构建专用', model: 'Nous Hermes 2 · 推理增强（模拟）', connection: '本地 gateway（模拟）' },
-  { id: 'p3', name: '小管', desc: '私人智能管家（butler 定制层）', model: 'Nous Hermes 2 · 管家指令集（模拟）', connection: '本地 gateway（模拟）' }
-]
-
-const USAGE_TOTAL = 4.2
-const USAGE_QUOTA = 20
-const USAGE_BY_PROFILE = [
-  { name: '默认', amount: 2.6 },
-  { name: 'Codex 协作', amount: 1.1 },
-  { name: '小管', amount: 0.5 }
-]
-
-const STORAGE_USED_GB = 2.4
-const STORAGE_TOTAL_GB = 10
+function Switch({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
+  return <button type="button" role="switch" aria-checked={checked} aria-label={label} className="switch" onClick={onChange}><span/></button>
+}
+function GroupTitle({ children }: { children: ReactNode }) {
+  return <h3 className="settings-group-title text-[12px] font-semibold mb-2 mt-6" style={{ color: 'var(--fg-tertiary)' }}>{children}</h3>
+}
 
 const ZOOM_KEY = 'hermes-ui-zoom'
-const APP_VERSION = '0.5.0-prototype'
-
-/* ============ 小组件 ============ */
-
-type SectionId = 'profile' | 'appearance' | 'usage' | 'system' | 'about'
-
-const SECTIONS: { id: SectionId; label: string; icon: typeof User }[] = [
-  { id: 'profile', label: '个人资料', icon: User },
-  { id: 'appearance', label: '外观', icon: Palette },
-  { id: 'usage', label: '用量', icon: Gauge },
-  { id: 'system', label: '系统', icon: Server },
-  { id: 'about', label: '关于', icon: Info }
-]
-
-function GroupTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-[12px] font-semibold tracking-wide mb-2" style={{ color: 'var(--fg-tertiary)' }}>
-      {children}
-    </h3>
-  )
+const APP_VERSION = '0.8.0-prototype'
+const PROFILE_INFO: Record<string, { desc: string; model: string }> = {
+  p1: { desc: '日常主力', model: 'Hermes 4 70B' },
+  p2: { desc: '点子构建专用', model: 'Hermes 4 405B' },
+  p3: { desc: '私人智能管家（butler 定制层）', model: 'Hermes 4 70B · 管家指令集' }
 }
 
-function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div
-      className={`rounded-xl ${className}`}
-      style={{
-        background: 'var(--bg-raised)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function Row({ icon: Icon, label, children }: { icon: typeof Wifi; label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <Icon size={16} style={{ color: 'var(--fg-tertiary)' }} aria-hidden className="shrink-0" />
-      <span className="text-[13px] flex-1" style={{ color: 'var(--fg-secondary)' }}>{label}</span>
-      {children}
-    </div>
-  )
-}
-
-function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border-subtle)', marginLeft: 52 }} />
-}
-
-function UsageBar({ pct, color = 'var(--accent)' }: { pct: number; color?: string }) {
-  return (
-    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-sunken)' }} role="progressbar"
-      aria-label="用量比例" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full rounded-full transition-all duration-200" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
-    </div>
-  )
-}
-
-/* ============ 主视图 ============ */
-
-export function SettingsView() {
-  const [section, setSection] = useState<SectionId>('profile')
-  const { mode, setMode } = useTheme()
+export function SettingsView({ request, profiles, activeProfile, onSwitchProfile, mode, setMode, archived, onUnarchive, onOpenShortcuts, onOpenCommandCenter, notify }: {
+  request: { id?: SettingsSection; n: number }
+  profiles: { id: string; name: string }[]
+  activeProfile: string
+  onSwitchProfile: (id: string) => void
+  mode: InterfaceMode
+  setMode: (m: InterfaceMode) => void
+  archived: MergedSession[]
+  onUnarchive: (id: string) => void
+  onOpenShortcuts: () => void
+  onOpenCommandCenter: (tab: CommandCenterTab) => void
+  notify: (text: string) => void
+}) {
+  const [section, setSection] = useState<SettingsSection>('general')
+  const [values, setValues] = useState<Record<string, boolean | string>>({})
+  const { mode: theme, setMode: setTheme } = useTheme()
   const { accent, setAccent } = useAccent()
-
-  const [activeProfile, setActiveProfile] = useState('p1')
   const [zoom, setZoom] = useState(() => {
-    try {
-      const v = Number(window.localStorage.getItem(ZOOM_KEY))
-      return v >= 80 && v <= 120 ? v : 100
-    } catch { return 100 }
+    try { const v = Number(window.localStorage.getItem(ZOOM_KEY)); return v >= 80 && v <= 120 ? v : 100 } catch { return 100 }
   })
-  const [toast, setToast] = useState<{ id: number; text: string } | null>(null)
-  const [checking, setChecking] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const timers = useRef<number[]>([])
-  const toastTimer = useRef<number | null>(null)
+  const [hud, setHud] = useState(false)
+  const [pet, setPet] = useState('不显示')
+  const [density, setDensity] = useState('舒适')
 
-  useEffect(() => () => { timers.current.forEach(clearTimeout); if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
-
+  useEffect(() => { if (request.n) setSection(request.id ?? 'general') }, [request])
   // 界面缩放：使用 CSS zoom 缩放全部控件与文本，并补偿视口高度
   useEffect(() => {
     document.documentElement.style.setProperty('--ui-scale', String(zoom / 100))
     try { window.localStorage.setItem(ZOOM_KEY, String(zoom)) } catch { /* ignore */ }
   }, [zoom])
 
-  const notify = (text: string) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    setToast({ id: Date.now(), text })
-    toastTimer.current = window.setTimeout(() => setToast(null), 2600)
-  }
-
-  const switchProfile = (p: Profile) => {
-    if (p.id === activeProfile) return
-    setActiveProfile(p.id)
-    notify(`已切换到「${p.name}」（模拟）`)
-  }
-
-  const checkUpdate = () => {
-    if (checking) return
-    setChecking(true)
-    timers.current.push(window.setTimeout(() => {
-      setChecking(false)
-      notify('已是最新版本（模拟）')
-    }, 1400))
-  }
-
-  const refreshUsage = () => {
-    if (refreshing) return
-    setRefreshing(true)
-    timers.current.push(window.setTimeout(() => {
-      setRefreshing(false)
-      notify('用量已更新（模拟）')
-    }, 900))
-  }
-
-  const restartBackend = () => {
-    notify('重启指令已发送（模拟）')
-  }
-
-  const exportDiagnostics = () => {
-    const text = [
-      'Hermes UI 诊断信息（模拟数据，非真实后端）',
-      `生成时间：${new Date().toLocaleString('zh-CN')}`,
-      `应用版本：${APP_VERSION}`,
-      `主题模式：${mode}`,
-      `界面缩放：${zoom}%`,
-      `当前 Profile：${PROFILES.find(p => p.id === activeProfile)?.name ?? activeProfile}`,
-      '后端状态：运行中（模拟）· hermes serve v0.9.1-mock',
-      '网关状态：已连接（模拟）· 本地 gateway',
-      `本月用量：$${USAGE_TOTAL.toFixed(2)} / $${USAGE_QUOTA.toFixed(2)}（模拟）`,
-      `存储占用：${STORAGE_USED_GB} GB / ${STORAGE_TOTAL_GB} GB（模拟）`,
-      '审批语义：CardStack 五条不变量保留（模拟校验通过）'
-    ].join('\n')
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'hermes-ui-diagnostics.txt'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-    notify('诊断信息已导出（模拟）')
-  }
+  const key = (label: string) => `${section}.${label}`
+  const renderBlocks = (blocks: Block[]) => blocks.map(b => <div key={b.title}>
+    <GroupTitle>{b.title}</GroupTitle>
+    <div className="grouped">
+      {b.rows.map(r => {
+        const c = r.control, k = key(r.label), cur = values[k]
+        return <div key={r.label} className="grouped-row">
+          <div className="flex-1 min-w-0"><div className="text-[13.5px]">{r.label}</div>{r.desc && <div className="t-caption">{r.desc}</div>}</div>
+          {c.type === 'toggle' && <Switch label={r.label} checked={(cur as boolean | undefined) ?? c.value} onChange={() => setValues(v => ({ ...v, [k]: !((cur as boolean | undefined) ?? c.value) }))} />}
+          {c.type === 'select' && <select className="select" aria-label={r.label} value={(cur as string | undefined) ?? c.value} onChange={e => setValues(v => ({ ...v, [k]: e.target.value }))}>{c.options.map(o => <option key={o}>{o}</option>)}</select>}
+          {c.type === 'value' && <span className="t-sub">{c.text}</span>}
+          {c.type === 'button' && <button className="btn" onClick={() => notify(`「${r.label}」：演示版暂未开放`)}>{c.label}</button>}
+        </div>
+      })}
+    </div>
+  </div>)
 
   const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
-    { id: 'light', label: '浅色', icon: Sun },
-    { id: 'dark', label: '深色', icon: Moon },
-    { id: 'system', label: '跟随系统', icon: Monitor }
+    { id: 'light', label: '浅色', icon: Sun }, { id: 'dark', label: '深色', icon: Moon }, { id: 'system', label: '跟随系统', icon: Monitor }
   ]
-
-  const usagePct = (USAGE_TOTAL / USAGE_QUOTA) * 100
-  const storagePct = (STORAGE_USED_GB / STORAGE_TOTAL_GB) * 100
-
-  const navBtn = (s: (typeof SECTIONS)[number]) => {
-    const active = section === s.id
-    const Icon = s.icon
-    return (
-      <button
-        key={s.id}
-        onClick={() => setSection(s.id)}
-        aria-current={active ? 'page' : undefined}
-        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors duration-150 w-full"
-        style={active
-          ? { background: 'var(--accent-soft)', color: 'var(--accent)', fontWeight: 600 }
-          : { color: 'var(--fg-secondary)' }}
-      >
-        <Icon size={15} aria-hidden />
-        <span className="text-[13px]">{s.label}</span>
-      </button>
-    )
-  }
+  const current = ALL.find(s => s.id === section)!
 
   return (
     <div className="flex flex-1 min-h-0">
-      {/* 左侧分组导航（桌面） */}
-      <aside aria-label="设置分组" className="hidden md:flex flex-col w-56 shrink-0 p-4 gap-0.5"
-        style={{ borderRight: '1px solid var(--border-subtle)' }}>
-        <div className="flex items-center gap-2 px-3 pb-3">
-          <h2 className="text-[15px] font-bold" style={{ color: 'var(--fg-primary)' }}>设置</h2>
-          <MockBadge label="MOCK" />
-        </div>
-        {SECTIONS.map(navBtn)}
-        <p className="text-[11px] px-3 mt-auto pt-4 leading-relaxed" style={{ color: 'var(--fg-tertiary)' }}>
-          密钥类配置在真实集成中走系统钥匙串，原型不触碰。
-        </p>
+      <aside aria-label="设置分组" className="settings-nav hidden md:flex">
+        <h2 className="t-title px-3 pb-2">设置</h2>
+        {GROUPS.map(g => <div key={g.title} className="mb-2">
+          <div className="settings-nav-group">{g.title}</div>
+          {g.items.map(s => { const Icon = s.icon; const active = section === s.id; return (
+            <button key={s.id} onClick={() => setSection(s.id)} aria-current={active ? 'page' : undefined} className={`settings-nav-item ${active ? 'active' : ''}`}>
+              <Icon size={15} aria-hidden /><span>{s.label}</span>
+            </button>) })}
+        </div>)}
       </aside>
 
-      {/* 右侧内容 */}
       <div className="flex-1 min-w-0 overflow-y-auto">
-        <div className="settings-content max-w-[720px] mx-auto px-5 py-5">
-          {/* 小屏顶部 tabs */}
+        <div className="settings-content max-w-[720px] mx-auto">
           <div className="md:hidden mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-[15px] font-bold" style={{ color: 'var(--fg-primary)' }}>设置</h2>
-              <MockBadge label="MOCK" />
-            </div>
+            <h2 className="t-title mb-3">设置</h2>
             <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" onKeyDown={onGroupKeyDown} aria-label="设置分组">
-              {SECTIONS.map(s => {
-                const active = section === s.id
-                const Icon = s.icon
-                return (
-                  <button key={s.id} role="tab" aria-selected={active} tabIndex={active ? 0 : -1} onClick={() => setSection(s.id)}
-                    className="btn shrink-0" style={active ? { background: 'var(--accent-soft)', borderColor: 'var(--accent-border)', color: 'var(--accent)' } : {}}>
-                    <Icon size={13} aria-hidden />{s.label}
-                  </button>
-                )
-              })}
+              {ALL.map(s => { const active = section === s.id; return (
+                <button key={s.id} role="tab" aria-selected={active} tabIndex={active ? 0 : -1} onClick={() => setSection(s.id)} className={`btn shrink-0 ${active ? 'btn-primary' : ''}`}>{s.label}</button>) })}
             </div>
           </div>
+          <h3 className="t-headline mb-4 hidden md:block">{current.label}</h3>
 
           <div key={section} className="view-enter">
-            {section === 'profile' && (
-              <section aria-label="个人资料">
-                <GroupTitle>PROFILE · 本页模拟选择</GroupTitle>
-                <div role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="选择 Profile" className="flex flex-col gap-2">
-                  {PROFILES.map(p => {
-                    const active = p.id === activeProfile
-                    return (
-                      <button key={p.id} role="radio" aria-checked={active} tabIndex={active ? 0 : -1} onClick={() => switchProfile(p)}
-                        className="text-left rounded-xl px-4 py-3.5 transition-all duration-150"
-                        style={active
-                          ? { background: 'var(--bg-raised)', border: '1px solid var(--accent-border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
-                          : { background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)' }}>
-                        <div className="flex items-center gap-3">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0 transition-colors duration-150"
-                            style={{ background: active ? 'var(--accent)' : 'var(--border-strong)' }} aria-hidden />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[13.5px] font-semibold" style={{ color: 'var(--fg-primary)' }}>{p.name}</div>
-                            <div className="text-[11.5px]" style={{ color: 'var(--fg-tertiary)' }}>{p.desc}</div>
-                          </div>
-                          {active && (
-                            <span className="chip shrink-0" style={{ color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>
-                              <BadgeCheck size={11} aria-hidden />当前
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mt-2.5 ml-5">
-                          <span className="chip"><Cpu size={11} aria-hidden />{p.model}</span>
-                          <span className="chip"><Plug2 size={11} aria-hidden />{p.connection}</span>
-                        </div>
-                      </button>
-                    )
-                  })}
+            {section === 'general' && <section aria-label="常规">
+              <GroupTitle>界面模式</GroupTitle>
+              <div role="radiogroup" aria-label="界面模式" onKeyDown={onGroupKeyDown} className="mode-cards">
+                {([['simple', '简洁', '只有侧边栏和对话，适合日常和 Hermes 聊天。'], ['advanced', '高级', '面向开发者：对话旁可打开文件、终端、改动审查、浏览器和日志面板。']] as const).map(([id, label, desc]) =>
+                  <button key={id} role="radio" aria-checked={mode === id} tabIndex={mode === id ? 0 : -1} className={`mode-card ${mode === id ? 'active' : ''}`} onClick={() => setMode(id)}>
+                    <strong>{label}</strong><span>{desc}</span>
+                  </button>)}
+              </div>
+              <p className="t-caption mt-2">只改变显示的内容，不改变 Hermes 的能力。</p>
+              {renderBlocks([{ title: '启动与语言', rows: [
+                { label: '语言', control: sel(['简体中文', 'English', '繁體中文']) },
+                { label: '启动时打开', control: sel(['上次的会话', '新会话']) }
+              ] }])}
+            </section>}
+
+            {section === 'appearance' && <section aria-label="外观">
+              <GroupTitle>主题</GroupTitle>
+              <div role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="主题模式" className="seg w-full">
+                {THEME_OPTIONS.map(o => { const Icon = o.icon; return (
+                  <button key={o.id} role="radio" aria-checked={theme === o.id} tabIndex={theme === o.id ? 0 : -1} onClick={() => setTheme(o.id)} className={`seg-btn flex-1 flex items-center justify-center gap-1.5 ${theme === o.id ? 'active' : ''}`}>
+                    <Icon size={14} aria-hidden />{o.label}
+                  </button>) })}
+              </div>
+              <p className="t-caption mt-2">「跟随系统」会实时响应 Windows 的深浅色设置；快捷键 Shift+X 可快速切换。</p>
+
+              <GroupTitle>强调色</GroupTitle>
+              <div className="grouped"><div className="grouped-row">
+                <div role="radiogroup" aria-label="强调色" onKeyDown={onGroupKeyDown} className="accent-picker">
+                  {ACCENTS.map(a => <button key={a.id} role="radio" aria-checked={accent === a.id} tabIndex={accent === a.id ? 0 : -1} aria-label={a.label} title={a.label} data-swatch={a.id} className="accent-swatch" onClick={() => setAccent(a.id)} />)}
                 </div>
-              </section>
-            )}
+                <span className="t-sub ml-auto">{ACCENTS.find(a => a.id === accent)?.label}</span>
+              </div></div>
 
-            {section === 'appearance' && (
-              <section aria-label="外观">
-                <GroupTitle>主题</GroupTitle>
-                <Card className="p-4">
-                  <div role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="主题模式" className="grid grid-cols-3 gap-1 p-1 rounded-xl"
-                    style={{ background: 'var(--bg-sunken)' }}>
-                    {THEME_OPTIONS.map(o => {
-                      const active = mode === o.id
-                      const Icon = o.icon
-                      return (
-                        <button key={o.id} role="radio" aria-checked={active} tabIndex={active ? 0 : -1} onClick={() => setMode(o.id)}
-                          className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12.5px] transition-all duration-150"
-                          style={active
-                            ? { background: 'var(--bg-raised)', color: 'var(--fg-primary)', fontWeight: 600, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
-                            : { color: 'var(--fg-secondary)' }}>
-                          <Icon size={14} aria-hidden />{o.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
-                    「跟随系统」实时响应 Windows 主题变化；也可用命令面板快速切换。
-                  </p>
-                </Card>
-
-                <div className="mt-5"><GroupTitle>强调色</GroupTitle></div>
-                <Card className="p-4">
-                  <div role="radiogroup" aria-label="强调色" onKeyDown={onGroupKeyDown} className="accent-picker">
-                    {ACCENTS.map(a => (
-                      <button key={a.id} role="radio" aria-checked={accent === a.id} tabIndex={accent === a.id ? 0 : -1}
-                        aria-label={a.label} title={a.label} data-swatch={a.id} className="accent-swatch" onClick={() => setAccent(a.id)} />
-                    ))}
-                    <span className="text-[12.5px] ml-2" style={{ color: 'var(--fg-secondary)' }}>{ACCENTS.find(a => a.id === accent)?.label}</span>
-                  </div>
-                  <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
-                    按钮、选中项、开关等处的主色，像 macOS 一样随你挑。
-                  </p>
-                </Card>
-
-                <div className="mt-5"><GroupTitle>界面缩放</GroupTitle></div>
-                <Card className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <label htmlFor="zoom" className="text-[13px] font-medium" style={{ color: 'var(--fg-primary)' }}>缩放比例</label>
-                    <span className="chip" style={{ color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{zoom}%</span>
-                  </div>
-                  <input id="zoom" type="range" min={80} max={120} step={5} value={zoom}
-                    onChange={e => setZoom(Number(e.target.value))}
-                    className="w-full accent-[var(--accent)]" aria-valuetext={`${zoom}%`} />
-                  <div className="flex justify-between text-[11px] mt-1" style={{ color: 'var(--fg-tertiary)' }}>
-                    <span>80%</span><span>100%</span><span>120%</span>
-                  </div>
-                  <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
-                    实时生效，偏好保存在本地（localStorage）。
-                  </p>
-                </Card>
-              </section>
-            )}
-
-            {section === 'usage' && (
-              <section aria-label="用量">
-                <div className="flex items-center gap-2 mb-2">
-                  <GroupTitle>本月用量</GroupTitle>
-                  <span className="mb-2"><MockBadge label="MOCK" /></span>
-                  <button className="btn mb-2 ml-auto" style={{ padding: '4px 10px', fontSize: 12 }}
-                    onClick={refreshUsage} disabled={refreshing}>
-                    <RefreshCw size={12} aria-hidden className={refreshing ? 'animate-spin' : ''} />
-                    {refreshing ? '刷新中…' : '刷新（模拟）'}
-                  </button>
+              <GroupTitle>字体与缩放</GroupTitle>
+              <div className="grouped">
+                <div className="grouped-row zoom-row">
+                  <div className="flex items-center justify-between"><label htmlFor="zoom" className="text-[13.5px]">界面缩放</label><span className="t-sub">{zoom}%</span></div>
+                  <input id="zoom" type="range" min={80} max={120} step={5} value={zoom} onChange={e => setZoom(Number(e.target.value))} className="w-full accent-[var(--accent)]" aria-valuetext={`${zoom}%`} />
                 </div>
-                <Card className="p-4">
-                  <div className="flex items-baseline justify-between mb-2">
-                    <span className="text-[22px] font-bold" style={{ color: 'var(--fg-primary)' }}>
-                      ${USAGE_TOTAL.toFixed(2)}
-                      <span className="text-[13px] font-normal" style={{ color: 'var(--fg-tertiary)' }}> / ${USAGE_QUOTA.toFixed(2)}</span>
-                    </span>
-                    <span className="text-[12.5px] font-semibold" style={{ color: usagePct > 80 ? 'var(--warning)' : 'var(--success)' }}>
-                      {usagePct.toFixed(0)}%
-                    </span>
-                  </div>
-                  <UsageBar pct={usagePct} color={usagePct > 80 ? 'var(--warning)' : 'var(--accent)'} />
-                  <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
-                    计费周期：每月 1 日重置（模拟）。真实值来自后端 usage RPC。
-                  </p>
-                </Card>
+                <div className="grouped-row"><span className="flex-1 text-[13.5px]">聊天显示密度</span>
+                  <select className="select" aria-label="聊天显示密度" value={density} onChange={e => setDensity(e.target.value)}><option>舒适</option><option>紧凑</option></select></div>
+              </div>
 
-                <div className="mt-5"><GroupTitle>按 PROFILE 分组</GroupTitle></div>
-                <Card>
-                  {USAGE_BY_PROFILE.map((u, i) => (
-                    <div key={u.name}>
-                      {i > 0 && <div style={{ borderTop: '1px solid var(--border-subtle)' }} />}
-                      <div className="px-4 py-3">
-                        <div className="flex justify-between text-[12.5px] mb-1.5">
-                          <span style={{ color: 'var(--fg-secondary)' }}>{u.name}</span>
-                          <span className="font-medium" style={{ color: 'var(--fg-primary)' }}>${u.amount.toFixed(2)}</span>
-                        </div>
-                        <UsageBar pct={(u.amount / USAGE_TOTAL) * 100} />
-                      </div>
-                    </div>
-                  ))}
-                </Card>
-              </section>
-            )}
+              <GroupTitle>窗口与趣味</GroupTitle>
+              <div className="grouped">
+                <div className="grouped-row"><div className="flex-1"><div className="text-[13.5px]">HUD 悬浮模式</div><div className="t-caption">把对话缩成一个悬浮在桌面上的小窗 · Ctrl+Shift+H</div></div>
+                  <Switch label="HUD 悬浮模式" checked={hud} onChange={() => { setHud(h => !h); notify(hud ? '已退出 HUD 模式（模拟）' : '已进入 HUD 模式（模拟，桌面版中窗口会缩成悬浮小窗）') }} /></div>
+                <div className="grouped-row"><div className="flex-1"><div className="text-[13.5px]">桌面宠物</div><div className="t-caption">一个陪你工作的小吉祥物（petdex）</div></div>
+                  <select className="select" aria-label="桌面宠物" value={pet} onChange={e => { setPet(e.target.value); notify(`桌面宠物：${e.target.value}（模拟）`) }}><option>不显示</option><option>Boba</option><option>Pixel</option><option>生成一只新的…</option></select></div>
+                <div className="grouped-row"><div className="flex-1"><div className="text-[13.5px]">布局编辑器</div><div className="t-caption">高级模式下自定义面板的位置与分区</div></div>
+                  <button className="btn" onClick={() => notify('布局编辑器：演示版暂未开放')}>打开</button></div>
+              </div>
+            </section>}
 
-            {section === 'system' && (
-              <section aria-label="系统">
-                <div className="flex items-center gap-2 mb-2">
-                  <GroupTitle>运行状态</GroupTitle>
-                  <span className="mb-2"><MockBadge label="MOCK" /></span>
-                </div>
-                <Card>
-                  <Row icon={Server} label="后端">
-                    <span className="flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: 'var(--success)' }}>
-                      <span className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} aria-hidden />
-                      运行中（模拟）
-                    </span>
-                  </Row>
-                  <Divider />
-                  <Row icon={Cpu} label="后端版本">
-                    <span className="text-[12.5px]" style={{ color: 'var(--fg-primary)' }}>hermes serve v0.9.1-mock</span>
-                  </Row>
-                  <Divider />
-                  <Row icon={Wifi} label="网关">
-                    <span className="flex items-center gap-1.5 text-[12.5px] font-medium" style={{ color: 'var(--success)' }}>
-                      <span className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} aria-hidden />
-                      已连接（模拟）
-                    </span>
-                  </Row>
-                  <Divider />
-                  <div className="px-4 py-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <HardDrive size={16} style={{ color: 'var(--fg-tertiary)' }} aria-hidden className="shrink-0" />
-                      <span className="text-[13px] flex-1" style={{ color: 'var(--fg-secondary)' }}>存储占用</span>
-                      <span className="text-[12.5px]" style={{ color: 'var(--fg-primary)' }}>{STORAGE_USED_GB} / {STORAGE_TOTAL_GB} GB</span>
-                    </div>
-                    <div className="ml-[52px]"><UsageBar pct={storagePct} /></div>
-                  </div>
-                </Card>
+            {section === 'profiles' && <section aria-label="配置档案">
+              <div className="flex items-center gap-2 mb-3">
+                <p className="t-sub flex-1">每个配置档案有自己的模型、技能、记忆和人格。</p>
+                <button className="btn" onClick={() => notify('导入配置档案：演示版暂未开放')}><Upload size={13} aria-hidden/>导入</button>
+                <button className="btn btn-primary" onClick={() => notify('新建配置档案：演示版暂未开放')}><Plus size={13} aria-hidden/>新建</button>
+              </div>
+              <div role="radiogroup" onKeyDown={onGroupKeyDown} aria-label="选择配置档案" className="grouped">
+                {profiles.map(p => { const active = p.id === activeProfile; const info = PROFILE_INFO[p.id]; return (
+                  <button key={p.id} role="radio" aria-checked={active} tabIndex={active ? 0 : -1} onClick={() => { if (!active) onSwitchProfile(p.id) }} className="grouped-row">
+                    <span className="profile-dot" style={{ background: active ? 'var(--accent)' : 'var(--border-strong)' }} aria-hidden />
+                    <span className="flex-1 min-w-0"><span className="block text-[13.5px] font-semibold">{p.name}</span><span className="t-caption">{info?.desc} · {info?.model}</span></span>
+                    {active ? <span className="chip"><BadgeCheck size={11} aria-hidden />当前</span> : <span className="t-caption">切换</span>}
+                  </button>) })}
+              </div>
+              <button className="btn btn-plain mt-3" onClick={() => notify('导出配置档案：演示版暂未开放')}><Download size={13} aria-hidden/>导出当前配置档案</button>
+            </section>}
 
-                <div className="mt-5"><GroupTitle>维护</GroupTitle></div>
-                <div className="flex flex-wrap gap-2">
-                  <button className="btn" onClick={checkUpdate} disabled={checking}>
-                    {checking ? <Loader2 size={13} aria-hidden className="animate-spin" /> : <Download size={13} aria-hidden />}
-                    {checking ? '检查中…' : '检查更新（模拟）'}
-                  </button>
-                  <button className="btn" onClick={restartBackend}>
-                    <RotateCcw size={13} aria-hidden />重启后端（模拟）
-                  </button>
-                </div>
-              </section>
-            )}
+            {section === 'archived' && <section aria-label="已归档对话">
+              {archived.length === 0 ? <div className="surface p-8 text-center t-sub"><Archive size={20} className="mx-auto mb-2" aria-hidden/>还没有归档的对话。在会话的「⋯」菜单里选择「归档」，它就会出现在这里。</div> :
+                <div className="grouped">{archived.map(s => <div key={s.id} className="grouped-row">
+                  <div className="flex-1 min-w-0"><div className="text-[13.5px] truncate">{s.title}</div><div className="t-caption">{s.profile} · {s.updatedAt}</div></div>
+                  <button className="btn" onClick={() => { onUnarchive(s.id); notify(`已取消归档「${s.title}」`) }}><ArchiveRestore size={13} aria-hidden/>取消归档</button>
+                </div>)}</div>}
+            </section>}
 
-            {section === 'about' && (
-              <section aria-label="关于">
-                <GroupTitle>版本</GroupTitle>
-                <Card>
-                  <Row icon={Info} label="Hermes UI 原型">
-                    <span className="chip">v{APP_VERSION}</span>
-                  </Row>
-                  <Divider />
-                  <Row icon={BadgeCheck} label="上游">
-                    <span className="text-[12.5px]" style={{ color: 'var(--fg-secondary)' }}>
-                      Hermes Agent by NousResearch（开源，Apache-2.0）
-                    </span>
-                  </Row>
-                </Card>
+            {section === 'shortcuts' && <section aria-label="键盘快捷键">
+              <div className="grouped">
+                {[['打开命令面板', 'Ctrl K'], ['新建会话', 'Ctrl N'], ['打开设置', 'Ctrl ,'], ['打开命令中心', 'Ctrl .'], ['切换浅色 / 深色', 'Shift X']].map(([l, k]) =>
+                  <div key={l} className="grouped-row"><span className="flex-1 text-[13.5px]">{l}</span><span className="kbd-group">{k.split(' ').map((x, i) => <kbd key={i}>{x}</kbd>)}</span></div>)}
+              </div>
+              <button className="btn btn-primary mt-4" onClick={onOpenShortcuts}><Keyboard size={13} aria-hidden/>查看全部快捷键</button>
+            </section>}
 
-                <div className="mt-5"><GroupTitle>诊断</GroupTitle></div>
-                <Card className="p-4">
-                  <p className="text-[12.5px] mb-3 leading-relaxed" style={{ color: 'var(--fg-secondary)' }}>
-                    导出当前配置与运行状态的文本摘要（全部为模拟数据），方便粘贴给开发者排查问题。
-                  </p>
-                  <button className="btn btn-primary" onClick={exportDiagnostics}>
-                    <Download size={13} aria-hidden />导出诊断信息（模拟）
-                  </button>
-                </Card>
-              </section>
-            )}
+            {section === 'about' && <section aria-label="关于">
+              <div className="grouped">
+                <div className="grouped-row"><Info size={16} aria-hidden style={{ color: 'var(--fg-tertiary)' }}/><span className="flex-1 text-[13.5px]">Hermes 新界面（原型）</span><span className="chip">v{APP_VERSION}</span></div>
+                <div className="grouped-row"><Bot size={16} aria-hidden style={{ color: 'var(--fg-tertiary)' }}/><span className="flex-1 text-[13.5px]">上游</span><span className="t-sub">Hermes Agent by NousResearch</span></div>
+                <div className="grouped-row"><span className="flex-1 text-[13.5px]">更新通道</span><select className="select" aria-label="更新通道"><option>稳定版</option><option>测试版</option></select></div>
+              </div>
+              <GroupTitle>系统与用量</GroupTitle>
+              <div className="grouped">
+                <button className="grouped-row" onClick={() => onOpenCommandCenter('system')}><Server size={16} aria-hidden/><span className="flex-1 text-[13.5px]">系统状态、日志与更新</span><span className="t-caption">命令中心 ›</span></button>
+                <button className="grouped-row" onClick={() => onOpenCommandCenter('usage')}><Gauge size={16} aria-hidden/><span className="flex-1 text-[13.5px]">用量与成本</span><span className="t-caption">命令中心 ›</span></button>
+                <button className="grouped-row" onClick={() => onOpenCommandCenter('maintenance')}><Layers size={16} aria-hidden/><span className="flex-1 text-[13.5px]">诊断与维护</span><span className="t-caption">命令中心 ›</span></button>
+              </div>
+              <GroupTitle>配置</GroupTitle>
+              <div className="flex gap-2 flex-wrap">
+                <button className="btn" onClick={() => notify('配置已导出（模拟）')}><Download size={13} aria-hidden/>导出配置</button>
+                <button className="btn" onClick={() => notify('导入配置：演示版暂未开放')}><Upload size={13} aria-hidden/>导入配置</button>
+                <button className="btn btn-danger" onClick={() => notify('已恢复默认设置（模拟）')}>恢复默认</button>
+              </div>
+            </section>}
+
+            {SCHEMA[section] && <section aria-label={current.label}>{renderBlocks(SCHEMA[section]!)}<p className="t-caption mt-4">演示选项，改动只在本次页面生效。</p></section>}
           </div>
         </div>
-      </div>
-
-      {/* 反馈 toast */}
-      <div aria-live="polite" className="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        {toast && (
-          <div key={toast.id}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium view-enter"
-            style={{ background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', color: 'var(--fg-primary)' }}>
-            <BadgeCheck size={15} style={{ color: 'var(--success)' }} aria-hidden />
-            {toast.text}
-          </div>
-        )}
       </div>
     </div>
   )

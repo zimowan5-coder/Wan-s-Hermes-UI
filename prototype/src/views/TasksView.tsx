@@ -245,7 +245,8 @@ const OPS: OpDef[] = [
   { id: 'export', icon: FileDown, name: 'memory export', desc: '导出记忆为 Markdown 归档', lines: ['渲染 Markdown…（模拟）', '✓ 已导出（模拟）'] }
 ]
 
-function OpsTab() {
+/** 维护面板：在命令中心 › 维护中使用（对应官方 command-center maintenance） */
+export function MaintenancePanel() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [lastId, setLastId] = useState<string | null>(null)
   const [lines, setLines] = useState<string[]>([])
@@ -271,9 +272,8 @@ function OpsTab() {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Wrench size={15} style={{ color: 'var(--accent)' }} aria-hidden />
-        <h3 className="text-[13.5px] font-semibold">运维</h3>
-        <span className="text-[11.5px]" style={{ color: 'var(--fg-tertiary)' }}>对应原生 command-center 维护面板</span>
-        <MockBadge label="MOCK" />
+        <h3 className="text-[13.5px] font-semibold">维护</h3>
+        <span className="text-[11.5px]" style={{ color: 'var(--fg-tertiary)' }}>诊断与清理（演示）</span>
       </div>
       <div className="grid grid-cols-2 gap-2.5">
         {OPS.map(op => {
@@ -309,8 +309,7 @@ function OpsTab() {
 
 const TABS = [
   { id: 'cron', label: '定时任务' },
-  { id: 'kanban', label: '看板' },
-  { id: 'ops', label: '运维' }
+  { id: 'kanban', label: '看板' }
 ] as const
 
 export function TasksView() {
@@ -325,7 +324,7 @@ export function TasksView() {
             <h2 className="t-title">任务</h2>
             <MockBadge />
           </div>
-          <p className="t-sub page-desc">定时执行，或一步一步完成。</p>
+          <p className="t-sub page-desc">定时执行的任务，和一步一步推进的看板。</p>
         </div>
         <div className="seg mb-5" role="tablist" onKeyDown={onGroupKeyDown} aria-label="任务二级导航">
           {TABS.map(t => (
@@ -336,10 +335,9 @@ export function TasksView() {
             </button>
           ))}
         </div>
-        {tab !== 'ops' && <label className="task-search mb-6"><ScanSearch size={15}/><input aria-label="搜索任务" placeholder="搜索任务…" value={query} onChange={e => setQuery(e.target.value)}/></label>}
+        {<label className="task-search mb-6"><ScanSearch size={15}/><input aria-label="搜索任务" placeholder="搜索任务…" value={query} onChange={e => setQuery(e.target.value)}/></label>}
         <div className="view-enter" hidden={tab !== 'cron'}><CronTab query={query}/></div>
         <div className="view-enter" hidden={tab !== 'kanban'}><KanbanTab query={query}/></div>
-        <div className="view-enter" hidden={tab !== 'ops'}><OpsTab/></div>
       </div>
     </div>
   )

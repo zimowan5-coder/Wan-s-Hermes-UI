@@ -39,6 +39,7 @@ export function useChatSession(sessionId: string, ds: HermesDataSource = getData
   const [loadVersion, setLoadVersion] = useState(0)
   const mounted = useRef(true)
   const inflight = useRef(new Set<string>())
+  const generation = useRef<Record<string, number>>({}) // 每次发送一个令牌；停止后旧回合的流式内容被丢弃
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const patch = useCallback((id: string, update: (prev: SessionState) => SessionState) => {
     if (mounted.current) setCache(prev => ({ ...prev, [id]: update(prev[id] ?? emptyState()) }))
@@ -84,11 +85,14 @@ export function useChatSession(sessionId: string, ds: HermesDataSource = getData
     const id = sessionId, t = text.trim()
     if (!t || !id || inflight.current.has(id)) return false
     inflight.current.add(id)
+    const token = (generation.current[id] = (generation.current[id] ?? 0) + 1)
+    const current = () => generation.current[id] === token
     patch(id, p => ({ ...p, sending: true, actionError: null }))
     try {
       // Demo tool simulation never leaks into the future live integration path.
       if (ds.kind === 'mock') { await ds.runTool(id, 'agent.plan', '规划回复中（模拟）'); await refreshRuns(id) }
       for await (const msg of ds.sendMessage(id, t)) {
+        if (!current()) break
         patch(id, p => ({ ...p, messages: p.messages.some(m => m.id === msg.id) ? p.messages.map(m => m.id === msg.id ? msg : m) : [...p.messages, msg] }))
       }
       await refreshRuns(id)
@@ -97,10 +101,19 @@ export function useChatSession(sessionId: string, ds: HermesDataSource = getData
       patch(id, p => ({ ...p, actionError: errorText(e) }))
       return false
     } finally {
-      inflight.current.delete(id)
-      patch(id, p => ({ ...p, sending: false }))
+      if (current()) {
+        inflight.current.delete(id)
+        patch(id, p => ({ ...p, sending: false }))
+      }
     }
   }, [ds, sessionId, patch, refreshRuns])
+  /** 停止当前回合：丢弃之后到达的流式内容（真实集成时对应后端 stop） */
+  const stop = useCallback(() => {
+    if (!inflight.current.has(sessionId)) return
+    generation.current[sessionId] = (generation.current[sessionId] ?? 0) + 1
+    inflight.current.delete(sessionId)
+    patch(sessionId, p => ({ ...p, sending: false }))
+  }, [sessionId, patch])
   const decide = useCallback(async (id: string, ok: boolean) => {
     try { await ds.decideApproval(id, ok); const next = await ds.listApprovals(); if (mounted.current) setApprovals(next); return true }
     catch (e) { patch(sessionId, p => ({ ...p, actionError: errorText(e) })); return false }
@@ -112,5 +125,5 @@ export function useChatSession(sessionId: string, ds: HermesDataSource = getData
   const sessionPending = useMemo(() => pendingApprovalsForSession(approvals, sessionId), [approvals, sessionId])
   const sessionDecided = useMemo(() => decidedApprovalsForSession(approvals, sessionId), [approvals, sessionId])
   const agentState: AgentState = state.sending ? 'thinking' : hasRunning ? 'tool-running' : state.runs.some(r => r.status === 'error') ? 'error' : sessionPending.length ? 'awaiting-approval' : 'idle'
-  return { ...state, approvals, sessionPending, sessionDecided, agentState, send, decide, retry, reload: () => setLoadVersion(n => n + 1) }
+  return { ...state, approvals, sessionPending, sessionDecided, agentState, send, stop, decide, retry, reload: () => setLoadVersion(n => n + 1) }
 }
