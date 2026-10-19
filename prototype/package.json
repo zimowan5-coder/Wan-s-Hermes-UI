@@ -31,13 +31,13 @@
     "dist:win": "npm run build && electron-builder --win --x64 --publish never"
   },
   "type": "module",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "main": "electron/main.cjs",
-  "productName": "Hermes",
+  "productName": "Hermes UI",
   "author": "Wan",
   "build": {
     "appId": "com.wan.hermes-ui",
-    "productName": "Hermes",
+    "productName": "Hermes UI",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -65,9 +65,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Hermes",
-      "artifactName": "Hermes-Setup-${version}.${ext}"
+      "shortcutName": "Hermes UI",
+      "artifactName": "Hermes-UI-Setup-${version}.${ext}"
     },
-    "publish": null
+    "publish": null,
+    "executableName": "HermesUI"
   }
 }

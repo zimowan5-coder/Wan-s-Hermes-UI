@@ -3,6 +3,10 @@
 const { app, BrowserWindow, ipcMain, shell, nativeTheme } = require('electron')
 const path = require('node:path')
 
+// 与官方 Hermes 桌面版（Hermes.exe，数据在 %APPDATA%\Hermes）区分开：
+// 程序名、安装目录、本地数据目录都用 "Hermes UI"，互不覆盖。
+app.setName('Hermes UI')
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1360,
