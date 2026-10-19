@@ -6,7 +6,7 @@ import {
   Server, Sun, User, Wifi
 } from 'lucide-react'
 import { MockBadge } from '../components/MockBadge'
-import { useTheme, type ThemeMode } from '../theme/theme'
+import { useTheme, type ThemeMode, ACCENTS, useAccent } from '../theme/theme'
 
 /* ============ 局部 MOCK 常量（本文件自包含，不碰 mock/data.ts） ============ */
 
@@ -101,6 +101,7 @@ function UsageBar({ pct, color = 'var(--accent)' }: { pct: number; color?: strin
 export function SettingsView() {
   const [section, setSection] = useState<SectionId>('profile')
   const { mode, setMode } = useTheme()
+  const { accent, setAccent } = useAccent()
 
   const [activeProfile, setActiveProfile] = useState('p1')
   const [zoom, setZoom] = useState(() => {
@@ -308,6 +309,20 @@ export function SettingsView() {
                   </div>
                   <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
                     「跟随系统」实时响应 Windows 主题变化；也可用命令面板快速切换。
+                  </p>
+                </Card>
+
+                <div className="mt-5"><GroupTitle>强调色</GroupTitle></div>
+                <Card className="p-4">
+                  <div role="radiogroup" aria-label="强调色" onKeyDown={onGroupKeyDown} className="accent-picker">
+                    {ACCENTS.map(a => (
+                      <button key={a.id} role="radio" aria-checked={accent === a.id} tabIndex={accent === a.id ? 0 : -1}
+                        aria-label={a.label} title={a.label} data-swatch={a.id} className="accent-swatch" onClick={() => setAccent(a.id)} />
+                    ))}
+                    <span className="text-[12.5px] ml-2" style={{ color: 'var(--fg-secondary)' }}>{ACCENTS.find(a => a.id === accent)?.label}</span>
+                  </div>
+                  <p className="text-[11.5px] mt-2.5" style={{ color: 'var(--fg-tertiary)' }}>
+                    按钮、选中项、开关等处的主色，像 macOS 一样随你挑。
                   </p>
                 </Card>
 

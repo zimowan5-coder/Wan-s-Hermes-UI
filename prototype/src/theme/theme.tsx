@@ -92,3 +92,43 @@ export function useTheme() {
 
   return { mode, resolved, setMode }
 }
+
+/**
+ * 强调色：仿 macOS「系统设置 › 外观 › 强调色」。
+ * 写入 <html data-accent>，具体色值由 index.css 按浅/深色主题分别定义。
+ */
+export const ACCENTS = [
+  { id: 'blue', label: '蓝色' },
+  { id: 'purple', label: '紫色' },
+  { id: 'pink', label: '粉色' },
+  { id: 'orange', label: '橙色' },
+  { id: 'green', label: '绿色' },
+  { id: 'graphite', label: '石墨色' }
+] as const
+export type AccentId = typeof ACCENTS[number]['id']
+
+const ACCENT_KEY = 'hermes-ui-accent'
+const accentListeners = new Set<(a: AccentId) => void>()
+
+function readAccent(): AccentId {
+  try {
+    const v = window.localStorage.getItem(ACCENT_KEY)
+    return ACCENTS.some(a => a.id === v) ? v as AccentId : 'blue'
+  } catch {
+    return 'blue'
+  }
+}
+
+export function useAccent() {
+  const [accent, setAccentState] = useState<AccentId>(readAccent)
+  useEffect(() => {
+    accentListeners.add(setAccentState)
+    return () => { accentListeners.delete(setAccentState) }
+  }, [])
+  useEffect(() => { document.documentElement.dataset.accent = accent }, [accent])
+  const setAccent = useCallback((a: AccentId) => {
+    try { window.localStorage.setItem(ACCENT_KEY, a) } catch { /* 仅本次生效 */ }
+    accentListeners.forEach(fn => fn(a))
+  }, [])
+  return { accent, setAccent }
+}

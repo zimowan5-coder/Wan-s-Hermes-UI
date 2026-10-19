@@ -1,51 +1,46 @@
-# 运行与验证 · v0.5
+# 运行与验证 · v0.6（macOS Glass）
 
-本轮：`feature/ui-craft-refinement`，基于 `feature/ui-prototype`。默认演示数据，不连接真实 Hermes。
+本轮分支：`feature/macos-glass-ui`，基于 `feature/ui-craft-refinement`。界面里的对话和数据都是演示内容，不连接真实 Hermes。
 
-## 启动
+## 在 Windows 上使用（不需要懂代码）
 
-Node.js 22+，npm 10+：
+1. 双击 `Hermes-Setup-0.1.0.exe`。
+2. 如果弹出蓝色的「Windows 已保护你的电脑」，点「更多信息」→「仍要运行」（因为安装包没有购买数字签名，属正常现象）。
+3. 按提示安装，完成后桌面会出现 **Hermes** 图标，以后双击它就能打开。
+
+## 自己打包安装包（开发者）
+
+Node.js 22+：
 
 ```bash
 cd prototype
 npm ci
-npm run dev
-# http://127.0.0.1:5174
+npm run app        # 在本机以桌面窗口打开（Windows / macOS / Linux 均可）
+npm run dist:win   # 生成 release/Hermes-Setup-<版本>.exe
 ```
+
+在 Windows 上直接运行 `npm run dist:win` 即可；在 Linux 上打 Windows 包需要安装 wine（含 32 位支持）。
+
+## 浏览器里预览（开发用）
+
+```bash
+cd prototype
+npm run dev   # http://127.0.0.1:5174
+```
+
+QA 参数：`?theme=light|dark|system`、`?view=tasks|skills|memory|messaging|settings`、`?notransition=1`、`?desktop=1`（在浏览器里显示红黄绿窗口按钮）。
 
 ## 验证
 
 ```bash
 npm run build
 npm test
-npm run preview
-# 保持生产预览运行，另开终端：
-npx playwright install chromium
-npm run test:ui
 ```
 
-已有系统 Chromium 时可指定路径：
+## 本轮可以试试
 
-```bash
-UI_CHROMIUM_PATH=/usr/bin/chromium npm run test:ui
-```
-
-`UI_BASE_URL` 可覆盖预览地址（默认 `http://127.0.0.1:4174`）。浏览器脚本会重写 `docs/UI-QA-RESULTS.json` 和 `docs/screenshots/v05/`，仅使用模拟内容。它检测外部网络请求，不会主动连接后端。`UI_CHROMIUM_PATH` 使用 `--no-sandbox` 仅适用于隔离 CI/容器，普通环境可使用 Playwright 安装的浏览器。
-
-## 可以实际尝试
-
-- 六工作台与浅/深/系统主题，工具栏日月按钮快速切换；Ctrl/⌘ K 搜索命令。
-- 会话搜索、会话草稿、Shift+Enter 多行、slash 联想、消息复制反馈。
-- 待审批跳转、危险审批二次确认、工具执行记录与失败重试。
-- 顶栏演示连接状态：断连后禁用发送，恢复保留草稿。
-- 定时任务：搜索、新建、暂停、模拟运行；看板：详情、进度、移动、删除撤销。
-- 紧凑窗口会话抽屉，小屏导航抽屉、纵向看板。
-- Tab/Shift+Tab、Esc、方向键、Home/End；系统减少动态偏好。
-
-## 数据边界
-
-刷新重置模拟业务状态与草稿；主题与导航偏好本地持久化。新会话操作打开已有空白演示会话；Profile 仅本页模拟选择。二维码、Token、任务和诊断均为模拟，请勿输入真实凭据。
-
-现有 `VITE_DATA=live` 适配器只具备原文档列出的有限能力，见 `docs/INTEGRATION-PLAN.md`。本轮没有配置或验证真实 Gateway。无障碍自动检查不代替真机/屏幕阅读器验证。
-
-QA 参数：`?theme=light|dark|system`、`?view=tasks|skills|memory|messaging|settings`、`?notransition=1`。
+- 左侧玻璃侧边栏：点不同页面，选中色块会弹性滑动；左上角红黄绿按钮可关闭 / 最小化 / 最大化窗口。
+- 侧边栏右上角按钮收起成图标栏；窗口拖窄时会自动收起。
+- `Ctrl + K` 或侧边栏「搜索」：Spotlight 式命令面板。
+- 设置 › 外观：浅色 / 深色 / 跟随系统，以及 6 种 macOS 强调色。
+- 聊天：发送消息（演示回复）、审批卡、slash 命令联想（输入 `/`）。

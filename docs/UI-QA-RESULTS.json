@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-13T04:21:00.213Z",
-  "browser": "154.0.8037.57",
+  "date": "2026-10-19T03:59:59.650Z",
+  "browser": "141.0.7390.37",
   "baseURL": "http://127.0.0.1:4174",
   "matrix": [
     {
@@ -591,8 +591,8 @@
     "command-dark.png"
   ],
   "productionAssets": [
-    "/assets/index-DAjknq4N.js",
-    "/assets/index-Dp_ZTsOp.css"
+    "./assets/index-C0dVsrIZ.js",
+    "./assets/index-Da0S2ANy.css"
   ],
   "passed": true,
   "summary": {
@@ -601,19 +601,5 @@
     "interactionChecks": 17,
     "layoutOrAccessibilityFailures": 0,
     "browserErrors": 0
-  },
-  "sourceCommit": "93af6b5d72b8f547879269e5b87e26fa5e9e2657",
-  "baselineCommit": "cce1f06e0f30ce5643d45c546a56689c72fe81dc",
-  "screenshotsSHA256": {
-    "board-dark.png": "302c550c0c7c03e8a35dbd48a7004c8ca78922954f089198037d72a4215a4607",
-    "board-light.png": "33717387c7e9b3761863541ec5c3d482c11f9b0b26813ab3bebe73bf0f504975",
-    "chat-dark.png": "10fcab6dee0d7bdffcca8207bb2bda9e00189f75c4deb3caf629ddf185b41cbd",
-    "chat-light.png": "ac25bebbaeed5001152c77d24bd5e9759c8f8133e55feac43b1975937e3f4671",
-    "chat-mobile.png": "1a1cbe89195ee1ca4f8041b1c1398ab9f1e38b2aa10c9bf565c20a9863b2f110",
-    "command-dark.png": "0f253166117fecf88299b5103a2f958d54b78293b3aa2a9e2cfb4de85229ebe7",
-    "empty-dark.png": "a9a47beaad26dd0bd0716149dcdefa274b81b1827ec83c40f63d1639788d6108",
-    "empty-light.png": "3479a4efe1e5036ad0616dd2e3db2dd6819df2b6cc11f6cb5a919a97c8a972a3",
-    "tasks-dark.png": "90a38ae513434d7ca98b253797aa55f300e777228e8ab7c687163610f33c5a90",
-    "tasks-light.png": "4b37265e578e97f53edefba07c748445d4dc9141a6143f7f3a20424d0b53f12b"
   }
 }

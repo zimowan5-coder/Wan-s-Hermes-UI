@@ -11,6 +11,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "4.7.0",
+    "electron": "38.8.6",
+    "electron-builder": "26.0.12",
     "playwright": "1.64.0",
     "tailwindcss": "4.1.12",
     "typescript": "5.9.2",
@@ -24,8 +26,48 @@
     "dev": "vite --host 127.0.0.1 --port 5174",
     "preview": "vite preview --host 127.0.0.1 --port 4174",
     "test": "vitest run",
-    "test:ui": "node scripts/ui-qa.mjs"
+    "test:ui": "node scripts/ui-qa.mjs",
+    "app": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win --x64 --publish never"
   },
   "type": "module",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "main": "electron/main.cjs",
+  "productName": "Hermes",
+  "author": "Wan",
+  "build": {
+    "appId": "com.wan.hermes-ui",
+    "productName": "Hermes",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "build/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hermes",
+      "artifactName": "Hermes-Setup-${version}.${ext}"
+    },
+    "publish": null
+  }
 }

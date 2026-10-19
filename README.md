@@ -19,6 +19,14 @@
 | ![浅色空会话](docs/screenshots/v05/empty-light.png) | ![深色空会话](docs/screenshots/v05/empty-dark.png) |
 | ![浅色任务看板](docs/screenshots/v05/board-light.png) | ![深色任务看板](docs/screenshots/v05/board-dark.png) |
 
+## 最新进展 · v0.6 macOS Glass（分支 `feature/macos-glass-ui`）
+
+- 整体视觉改为 macOS 风格：浮动玻璃侧边栏、柔和壁纸透色、高光描边、弹性动效、红黄绿窗口按钮
+- 新增 6 种强调色（设置 › 外观），Spotlight 式命令面板
+- 打包为 Windows 桌面软件（Electron），双击安装包即可安装，见 `RUN.md`
+
+![v0.6 聊天](docs/screenshots/v06/chat-light.png)
+
 ## 原型速览
 
 6 个工作台：**聊天**（会话/审批卡/工具时间线）· **任务**（定时任务+看板）· **技能** ·

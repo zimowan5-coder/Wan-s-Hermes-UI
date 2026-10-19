@@ -193,7 +193,7 @@ function MessageRow({ m }: { m: ChatMessage }) {
     <div className="msg-stream flex justify-end py-1.5">
       <div
         className="user-message max-w-[85%] px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap"
-        style={{ background: 'var(--message-user)', color: 'var(--fg-primary)', borderRadius: '18px 18px 5px 18px' }}
+        style={{ background: 'var(--message-user)', color: 'var(--message-user-fg)', borderRadius: '20px 20px 6px 20px' }}
       >
         {m.text}
         <div className="text-[10px] mt-1 opacity-70">{m.time}</div>
@@ -422,12 +422,12 @@ export function ChatView({ connectionOk, newChatRequest = 0 }: { connectionOk: b
   const sessionPanel = (
     <aside aria-label="会话列表" className="session-sidebar">
           <div className="px-3 pt-3 pb-2 flex items-center justify-between">
-            <span className="text-[12px] font-semibold" style={{ color: 'var(--fg-secondary)' }}>会话</span>
+            <span className="text-[13px] font-semibold">会话</span>
             <div className="flex items-center gap-1">
               <button className="icon-btn" aria-label="打开空白演示会话" title="空白演示会话" onClick={() => switchSession('s6')}><MessageSquarePlus size={16}/></button>
-              <button className="btn" style={{ padding: 4 }} onClick={() => setListOpen(false)} aria-label="折叠会话列表" title="折叠会话列表">
-                <PanelLeftClose size={14} aria-hidden />
-              </button>
+              {narrow && <button className="icon-btn" onClick={() => setListOpen(false)} aria-label="折叠会话列表" title="折叠会话列表">
+                <PanelLeftClose size={16} aria-hidden />
+              </button>}
             </div>
           </div>
           <label className="session-search"><Search size={14} aria-hidden/><input aria-label="搜索会话" placeholder="搜索会话" value={sessionSearch} onChange={e => setSessionSearch(e.target.value)}/></label>
@@ -551,8 +551,8 @@ export function ChatView({ connectionOk, newChatRequest = 0 }: { connectionOk: b
                 id="composer"
                 ref={inputRef}
                 className="flex-1"
-                style={{ border: 'none', background: 'transparent', resize: 'none', boxShadow: 'none', outline: 'none', fontSize: '13.5px', color: 'var(--fg-primary)', padding: '8px 0' }}
-                rows={2}
+                style={{ border: 'none', background: 'transparent', resize: 'none', boxShadow: 'none', outline: 'none', fontSize: '14px', color: 'var(--fg-primary)', padding: '7px 0' }}
+                rows={1}
                 onInput={e => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = `${Math.min(160, el.scrollHeight)}px` }}
                 placeholder={connectionOk ? '发消息给 Hermes…' : '已断连（模拟），无法发送'}
                 value={input}
