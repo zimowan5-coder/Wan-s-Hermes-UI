@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-19T03:59:59.650Z",
+  "date": "2026-10-19T05:08:55.648Z",
   "browser": "141.0.7390.37",
   "baseURL": "http://127.0.0.1:4174",
   "matrix": [
@@ -591,8 +591,8 @@
     "command-dark.png"
   ],
   "productionAssets": [
-    "./assets/index-C0dVsrIZ.js",
-    "./assets/index-Da0S2ANy.css"
+    "./assets/index-D6WC9_YD.js",
+    "./assets/index-C9daLANB.css"
   ],
   "passed": true,
   "summary": {

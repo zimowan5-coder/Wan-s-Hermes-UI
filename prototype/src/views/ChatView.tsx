@@ -74,10 +74,10 @@ function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: string, ok:
     <section aria-label={`待审批：${a.title}`} className="approval-card p-4">
       <div className="flex items-center gap-2 mb-1.5">
         {a.risk === 'high'
-          ? <ShieldAlert size={15} style={{ color: riskColor[a.risk] }} aria-hidden />
-          : <ShieldCheck size={15} style={{ color: riskColor[a.risk] }} aria-hidden />}
+          ? <ShieldAlert size={15} style={{ color: 'var(--fg-secondary)' }} aria-hidden />
+          : <ShieldCheck size={15} style={{ color: 'var(--fg-secondary)' }} aria-hidden />}
         <span className="font-semibold text-[13px]">需要你的审批</span>
-        <span className="chip" style={{ color: riskColor[a.risk], borderColor: riskColor[a.risk] }}>{riskLabel[a.risk]}</span>
+        <span className="risk-label"><span className="status-dot" style={{ background: riskColor[a.risk] }} aria-hidden />{riskLabel[a.risk]}</span>
         <MockBadge />
       </div>
       <div className="font-medium text-[13px] mb-1">{a.title}</div>
@@ -252,13 +252,12 @@ function EmptyState({ onSuggest }: { onSuggest: (t: string) => void }) {
   const suggestions = ['总结今天的审计进展', '帮我规划明天的 AI 早报', '看看有哪些技能可用']
   return (
     <div className="chat-empty flex flex-col items-center justify-center text-center px-6 py-16 view-enter">
-      <div className="empty-orbit" aria-hidden><HermesMark /><span/><span/></div>
-      <span className="eyebrow">A LITTLE SPACE FOR BIG IDEAS</span>
+      <HermesMark className="empty-mark" />
+      <p className="empty-greeting">Wan，你好</p>
       <h3 className="empty-title">有什么想一起完成？</h3>
-      <p className="text-[13px] mb-6 max-w-[380px]" style={{ color: 'var(--fg-secondary)' }}>从一个想法开始，剩下的我们一起梳理。<br/>当前为演示会话，不连接真实 Hermes。</p>
       <div className="flex flex-wrap gap-2 justify-center">
         {suggestions.map(s => (
-          <button key={s} className="btn" onClick={() => onSuggest(s)}>{s}</button>
+          <button key={s} className="btn suggestion-chip" onClick={() => onSuggest(s)}>{s}</button>
         ))}
       </div>
     </div>
@@ -451,7 +450,7 @@ export function ChatView({ connectionOk, newChatRequest = 0 }: { connectionOk: b
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-medium truncate flex-1">{s.title}</span>
                     {pCount > 0 && (
-                      <span className="text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: 'var(--warning-soft)', color: 'var(--warning)' }} title={`${pCount} 待审批`}>{pCount}</span>
+                      <span className="text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: 'var(--bg-fill-hover)', color: 'var(--fg-secondary)' }} title={`${pCount} 待审批`}>{pCount}</span>
                     )}
                     {s.unread ? (
                       <span className="text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: 'var(--accent)', color: 'var(--accent-fg)' }}>{s.unread}</span>
@@ -479,12 +478,12 @@ export function ChatView({ connectionOk, newChatRequest = 0 }: { connectionOk: b
           <button className="icon-btn" aria-label={listOpen ? '折叠会话列表' : '展开会话列表'} aria-expanded={listOpen} onClick={() => setListOpen(v => !v)}>{listOpen ? <PanelLeftClose size={17}/> : <PanelLeftOpen size={17}/>}</button>
           <div className="chat-heading"><span className="font-semibold text-[14px]">{activeSession?.title ?? '会话'}</span><span>{activeSession?.profile ?? '默认'} · 演示会话</span></div>
           {sessionPending.length > 0 && (
-            <button className="chip approval-jump" onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: reducedMotion ? 'instant' : 'smooth' })} style={{ color: 'var(--warning)', background: 'var(--warning-soft)' }}>
+            <button className="chip approval-jump" onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: reducedMotion ? 'instant' : 'smooth' })}>
               <History size={11} aria-hidden />{sessionPending.length} 待审批
             </button>
           )}
-          <span className="agent-status ml-auto" role="status" aria-live="polite" style={{ color: meta.color, borderColor: meta.color }}>
-            {meta.spin && <Loader2 size={11} className="animate-spin" aria-hidden />}
+          <span className="agent-status ml-auto" role="status" aria-live="polite">
+            {meta.spin ? <Loader2 size={11} className="animate-spin" style={{ color: meta.color }} aria-hidden /> : <span className="status-dot" style={{ background: meta.color }} aria-hidden />}
             {meta.label}
           </span>
         </div>

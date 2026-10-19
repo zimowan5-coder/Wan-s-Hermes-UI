@@ -31,7 +31,7 @@
     "dist:win": "npm run build && electron-builder --win --x64 --publish never"
   },
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "electron/main.cjs",
   "productName": "Hermes",
   "author": "Wan",

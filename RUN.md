@@ -1,10 +1,10 @@
-# 运行与验证 · v0.6（macOS Glass）
+# 运行与验证 · v0.7（Calm）
 
 本轮分支：`feature/macos-glass-ui`，基于 `feature/ui-craft-refinement`。界面里的对话和数据都是演示内容，不连接真实 Hermes。
 
 ## 在 Windows 上使用（不需要懂代码）
 
-1. 双击 `Hermes-Setup-0.1.0.exe`。
+1. 双击 `Hermes-Setup-0.2.0.exe`。
 2. 如果弹出蓝色的「Windows 已保护你的电脑」，点「更多信息」→「仍要运行」（因为安装包没有购买数字签名，属正常现象）。
 3. 按提示安装，完成后桌面会出现 **Hermes** 图标，以后双击它就能打开。
 

@@ -2,7 +2,7 @@ import {
   Bell, Brain, MessageSquare, Moon, PanelLeft, Plug2, Search,
   Settings as SettingsIcon, SquareKanban, Sun, X
 } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTheme } from '../theme/theme'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { Modal } from './Modal'
@@ -23,7 +23,11 @@ const desktop = (window as unknown as { hermesWindow?: DesktopBridge }).hermesWi
 const showWindowControls = !!desktop || new URLSearchParams(window.location.search).get('desktop') === '1'
 
 export function HermesMark({ className = '' }: { className?: string }) {
-  return <span className={`hermes-mark ${className}`} aria-hidden><svg viewBox="0 0 24 24" fill="none"><path d="M6 5v14M18 5v14M6 12h12" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/><path d="m3 7 3-2 3 2m6 10 3 2 3-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+  const id = useId().replace(/:/g, '')
+  return <span className={`hermes-mark ${className}`} aria-hidden><svg viewBox="0 0 24 24" fill="none">
+    <defs><linearGradient id={`hm-${id}`} x1="3" y1="4" x2="21" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#4f8ef7"/><stop offset=".55" stopColor="#9b72cb"/><stop offset="1" stopColor="#d96570"/></linearGradient></defs>
+    <g stroke={`url(#hm-${id})`} strokeLinecap="round" strokeLinejoin="round"><path d="M6 5v14M18 5v14M6 12h12" strokeWidth="2.6"/><path d="m3 7 3-2 3 2m6 10 3 2 3-2" strokeWidth="1.5"/></g>
+  </svg></span>
 }
 
 /** macOS 式红黄绿窗口按钮：悬停整组时显示符号。 */

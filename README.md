@@ -19,13 +19,19 @@
 | ![浅色空会话](docs/screenshots/v05/empty-light.png) | ![深色空会话](docs/screenshots/v05/empty-dark.png) |
 | ![浅色任务看板](docs/screenshots/v05/board-light.png) | ![深色任务看板](docs/screenshots/v05/board-dark.png) |
 
-## 最新进展 · v0.6 macOS Glass（分支 `feature/macos-glass-ui`）
+## 最新进展 · v0.7 Calm（分支 `feature/macos-glass-ui`）
+
+- 配色改为参考 Gemini 的安静风格：白底 + 浅灰，大面积留白；彩色只留给渐变标志和输入框下方的淡光
+- 审批卡、状态标签改为素色，风险用小圆点表示；用户消息改为浅灰气泡
+- 保留 v0.6 的 macOS 窗口按钮、动效、Ctrl+K 命令面板、强调色设置
+
+![v0.7 聊天](docs/screenshots/v07/chat-light.png)
+
+## v0.6 macOS Glass
 
 - 整体视觉改为 macOS 风格：浮动玻璃侧边栏、柔和壁纸透色、高光描边、弹性动效、红黄绿窗口按钮
 - 新增 6 种强调色（设置 › 外观），Spotlight 式命令面板
 - 打包为 Windows 桌面软件（Electron），双击安装包即可安装，见 `RUN.md`
-
-![v0.6 聊天](docs/screenshots/v06/chat-light.png)
 
 ## 原型速览
 
