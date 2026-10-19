@@ -49,13 +49,13 @@ export function HermesMark({ className = '' }: { className?: string }) {
   </svg></span>
 }
 
-/** macOS 式红黄绿窗口按钮：悬停整组时显示符号。 */
+/** 红黄绿窗口按钮：放在右上角，按 Windows 习惯排列（关闭在最右）；悬停整组时显示符号。 */
 function TrafficLights() {
   if (!showWindowControls) return null
   return <div className="traffic-lights" role="group" aria-label="窗口控制">
-    <button className="tl tl-close" aria-label="关闭窗口" onClick={() => desktop?.close()}><svg viewBox="0 0 10 10"><path d="M3 3l4 4M7 3l-4 4"/></svg></button>
-    <button className="tl tl-min" aria-label="最小化窗口" onClick={() => desktop?.minimize()}><svg viewBox="0 0 10 10"><path d="M2.5 5h5"/></svg></button>
-    <button className="tl tl-max" aria-label="最大化窗口" onClick={() => desktop?.toggleMaximize()}><svg viewBox="0 0 10 10"><path d="M3 3.2h3.8v3.8M7 6.8H3.2V3"/></svg></button>
+    <button className="tl tl-min" aria-label="最小化窗口" title="最小化" onClick={() => desktop?.minimize()}><svg viewBox="0 0 10 10"><path d="M2.5 5h5"/></svg></button>
+    <button className="tl tl-max" aria-label="最大化窗口" title="最大化 / 还原" onClick={() => desktop?.toggleMaximize()}><svg viewBox="0 0 10 10"><path d="M3 3.2h3.8v3.8M7 6.8H3.2V3"/></svg></button>
+    <button className="tl tl-close" aria-label="关闭窗口" title="关闭" onClick={() => desktop?.close()}><svg viewBox="0 0 10 10"><path d="M3 3l4 4M7 3l-4 4"/></svg></button>
   </div>
 }
 
@@ -157,7 +157,6 @@ export function Shell(p: ShellProps) {
     const showSessions = mobile || !railOnly
     return <>
       <div className="sidebar-top">
-        <TrafficLights />
         {mobile
           ? <button className="icon-btn ml-auto" aria-label="关闭导航" onClick={() => setMobileOpen(false)}><X size={17}/></button>
           : <button className="icon-btn sidebar-toggle" onClick={toggleNav} aria-expanded={compact ? mobileOpen : !collapsed} aria-label={compact ? '打开完整导航' : collapsed ? '展开侧边栏' : '收起侧边栏'} title={compact ? '打开完整导航' : collapsed ? '展开侧边栏 · Ctrl+B' : '收起侧边栏 · Ctrl+B'}><PanelLeft size={16} strokeWidth={1.7}/></button>}
@@ -215,6 +214,7 @@ export function Shell(p: ShellProps) {
             {p.mode === 'advanced' && view === 'chat' && <button className={`capsule-btn ${p.rightPanelOpen ? 'is-on' : ''}`} aria-label={p.rightPanelOpen ? '隐藏右侧面板' : '显示右侧面板'} aria-pressed={p.rightPanelOpen} onClick={p.onToggleRightPanel} title="文件、终端、审查 · Ctrl+J"><PanelRight size={15}/></button>}
           </div>
           <button className={`connection-control ${connectionOk ? '' : 'is-disconnected'}`} onClick={p.onToggleConnection} aria-label={connectionOk ? '模拟断开连接' : '模拟恢复连接'} title="仅切换演示连接状态，未连接真实 Hermes"><span aria-hidden/>{connectionOk ? '演示模式' : '模拟断连'}</button>
+          <TrafficLights />
         </div>
       </header>
       <ToolbarSlot.Provider value={slotEl}>

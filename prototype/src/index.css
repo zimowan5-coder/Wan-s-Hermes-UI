@@ -1399,3 +1399,10 @@ button.grouped-row:hover { background: var(--bg-fill); }
 .zoom-row input[type="range"] { display: block; width: 100%; margin-top: 8px; }
 @media (max-width: 700px) { .app-shell > .app-sidebar { display: none; } }
 @media (max-width: 700px) { .toolbar-slot .approval-jump { display: none; } .toolbar-slot .chat-heading { flex: 1; } .toolbar-actions .connection-control { font-size: 0; gap: 0; padding: 0 10px; } }
+
+/* v0.9 · 窗口按钮移到右上角并放大 */
+.workspace-toolbar .traffic-lights { -webkit-app-region: no-drag; gap: 10px; margin-left: 6px; padding-left: 14px; border-left: 1px solid var(--border-subtle); height: 22px; }
+.workspace-toolbar .tl { width: 15px; height: 15px; }
+.workspace-toolbar .tl svg { width: 9px; height: 9px; stroke-width: 1.4; }
+.sidebar-top { justify-content: flex-start; padding-left: 2px; }
+.sidebar-top .sidebar-toggle { margin-left: 0; }
