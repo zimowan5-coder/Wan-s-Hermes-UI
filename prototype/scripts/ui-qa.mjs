@@ -40,13 +40,13 @@ try {
  }
  await test('Session drafts; IME Enter does not send',async()=>{
   await go();await input().fill('测试草稿，仅此会话');await p.getByRole('button',{name:/每日 AI 早报素材整理/}).click();assert.equal(await input().inputValue(),'')
-  await p.getByRole('button',{name:/宿舍网络审计跟进.*默认/}).click();assert.equal(await input().inputValue(),'测试草稿，仅此会话')
+  await p.getByRole('button',{name:/示例网络检查跟进.*默认/}).click();assert.equal(await input().inputValue(),'测试草稿，仅此会话')
   await input().dispatchEvent('keydown',{key:'Enter',code:'Enter',isComposing:true});assert.equal(await input().inputValue(),'测试草稿，仅此会话')
  })
  await test('Async sends stay in their original session',async()=>{
   await go();await input().fill('会话隔离测试标记');await button('发送消息').click();await p.getByRole('button',{name:/每日 AI 早报素材整理/}).click();await p.waitForTimeout(1100)
   assert.equal(await p.locator('.chat-scroll').getByText(/会话隔离测试标记/).count(),0)
-  await p.getByRole('button',{name:/宿舍网络审计跟进.*默认/}).click();await p.waitForTimeout(150);assert.ok(await p.locator('.chat-scroll').getByText(/会话隔离测试标记/).count()>0)
+  await p.getByRole('button',{name:/示例网络检查跟进.*默认/}).click();await p.waitForTimeout(150);assert.ok(await p.locator('.chat-scroll').getByText(/会话隔离测试标记/).count()>0)
   assert.equal(await p.getByText('Hermes 正在输入（模拟）…').isVisible(),false)
  })
  await test('Draft survives workbench navigation',async()=>{
@@ -54,7 +54,7 @@ try {
  })
  await test('Slash keyboard insertion',async()=>{await go();await input().fill('/sk');await input().press('End');await input().press('Enter');assert.equal(await input().inputValue(),'/skills ')})
  await test('High-risk approval uses cancel default and Escape',async()=>{
-  await go();const high=p.getByRole('region',{name:/待审批：执行：ZeroOmega/});await high.getByRole('button',{name:'批准',exact:true}).click();assert.match(await p.locator(':focus').innerText(),/取消/)
+  await go();const high=p.getByRole('region',{name:/待审批：执行：示例网络规则/});await high.getByRole('button',{name:'批准',exact:true}).click();assert.match(await p.locator(':focus').innerText(),/取消/)
   await p.keyboard.press('Escape');assert.equal(await high.getByRole('button',{name:'确认批准',exact:true}).count(),0)
   await high.getByRole('button',{name:'批准',exact:true}).click();await high.getByRole('button',{name:'确认批准',exact:true}).click();await p.getByText('已批准',{exact:false}).first().waitFor();assert.equal(await p.getByRole('button',{name:/1 待审批/}).count(),1)
  })

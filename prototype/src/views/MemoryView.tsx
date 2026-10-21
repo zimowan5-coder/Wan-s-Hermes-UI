@@ -23,12 +23,12 @@ const kindColor: Record<Kind, string> = {
 const NODE_META: Record<string, { desc: string; tag: string }> = {
   n1: { desc: '记忆图谱的中心：所有条目都挂在这下面', tag: '核心' },
   n2: { desc: '为 Hermes Desktop 做新交互：原型、设计系统、架构衔接', tag: '项目' },
-  n3: { desc: 'Claude Code 审计宿舍网络：分阶段跑报告，我当监工', tag: '项目' },
+  n3: { desc: '示例网络检查：分阶段跑报告，人工复核', tag: '项目' },
   n4: { desc: '每天 09:45 的 AI 早报，素材整理后投递', tag: '项目' },
   n5: { desc: '每天 21:45 左右：3–5 个可动手做的点子，去重后投递', tag: '项目' },
   n6: { desc: '私人智能管家定制层：只读，不直接改', tag: '项目' },
   n7: { desc: '写代码的执行者：几次 session 出一个 MVP', tag: '工具' },
-  n8: { desc: '舍友抽烟：桌面空气净化器方案，不伤和气', tag: '场景' }
+  n8: { desc: '示例场景：工作区偏好与通知习惯', tag: '场景' }
 }
 
 /* ---------------- 条目 Tab ---------------- */
